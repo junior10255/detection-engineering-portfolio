@@ -1,3 +1,8 @@
+![MITRE ATT\&CK](https://img.shields.io/badge/MITRE-ATT%26CK-red)
+![Sigma Rules](https://img.shields.io/badge/Detections-Sigma-blue)
+![Status](https://img.shields.io/badge/Status-Active-success)
+![License](https://img.shields.io/badge/License-MIT-green)
+
 # 🛡️ Detection Engineering Portfolio
 
 Welcome to my Detection Engineering portfolio.
@@ -81,16 +86,25 @@ Each rule follows:
 
 ---
 
+## 🧪 Lab Validation
+
+Detections are tested using:
+
+* Atomic Red Team
+* Manual adversary simulation
+* PowerShell tradecraft
+* Registry & persistence techniques
+
+---
+
 ## 🚀 Featured Use Cases
 
-| Technique | Detection                    |
-| --------- | ---------------------------- |
-| T1547.001 | Run Registry Key Persistence |
-| T1053     | Scheduled Task Creation      |
-| T1546     | Event Triggered Execution    |
-| T1112     | Registry Modification        |
-
-*(Continuously updated)*
+| MITRE Technique | Detection Use Case           |
+| --------------- | ---------------------------- |
+| T1547.001       | Run Registry Key Persistence |
+| T1053           | Scheduled Task Creation      |
+| T1546           | Event Triggered Execution    |
+| T1112           | Registry Modification        |
 
 ---
 
@@ -98,6 +112,9 @@ Each rule follows:
 
 **Luiz Junior**
 Detection Engineer | Blue Team | Threat Detection
+
+* Focus: Detection Engineering & Threat Hunting
+* Specialization: Sigma • SIEM • MITRE ATT&CK
 
 ---
 
