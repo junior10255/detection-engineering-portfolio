@@ -1,7 +1,5 @@
 ![MITRE ATT\&CK](https://img.shields.io/badge/MITRE-ATT%26CK-red)
 ![Sigma Rules](https://img.shields.io/badge/Detections-Sigma-blue)
-![Status](https://img.shields.io/badge/Status-Active-success)
-![License](https://img.shields.io/badge/License-MIT-green)
 
 # 🛡️ Detection Engineering Portfolio
 
