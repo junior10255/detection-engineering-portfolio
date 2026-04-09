@@ -1,53 +1,39 @@
-![MITRE ATT\&CK](https://img.shields.io/badge/MITRE-ATT%26CK-red)
-![Sigma Rules](https://img.shields.io/badge/Detections-Sigma-blue)
+# 🛡️ Portfólio de Detection Engineering
 
-# 🛡️ Detection Engineering Portfolio
+Repositório dedicado ao desenvolvimento de regras de detecção, casos de threat hunting e pesquisas em segurança focadas na identificação de comportamentos maliciosos em ambientes corporativos.
 
-Welcome to my Detection Engineering portfolio.
-
-This repository contains detection rules, threat hunting use cases, and security research focused on identifying adversary behavior across enterprise environments.
-
-All detections are mapped to the **MITRE ATT&CK® framework** and designed to support SOC operations, Incident Response, and Threat Hunting activities.
+Todas as detecções são mapeadas ao framework MITRE ATT&CK® e projetadas para apoiar operações de SOC, Resposta a Incidentes e Threat Hunting.
 
 ---
 
-## 🎯 Objectives
+## 🎯 Objetivos
 
-* Develop high-fidelity detection rules
-* Reduce false positives through tuning
-* Map detections to real adversary techniques
-* Strengthen Blue Team visibility
-* Support proactive threat hunting
-
----
-
-## 🧠 Detection Coverage
-
-Current focus areas:
-
-* Persistence
-* Privilege Escalation
-* Credential Access
-* Defense Evasion
-* Lateral Movement
-* Execution
+* Desenvolver regras de detecção de alta fidelidade
+* Reduzir falsos positivos através de tuning
+* Mapear detecções para técnicas reais de ataque
+* Aumentar a visibilidade do Blue Team
+* Apoiar atividades de threat hunting
 
 ---
 
-## 📂 Repository Structure
+## 📂 Estrutura do Repositório
 
-```
+```id="f0r2k9"
 sigma/
+ ├── reconnaissance/
+ ├── resource_development/
+ ├── initial_access/
+ ├── execution/
  ├── persistence/
  ├── privilege_escalation/
- ├── credential_access/
  ├── defense_evasion/
+ ├── credential_access/
+ ├── discovery/
  ├── lateral_movement/
- └── execution/
-
-hunting/
- ├── hypotheses/
- └── queries/
+ ├── collection/
+ ├── command_and_control/
+ ├── exfiltration/
+ └── impact/
 
 conversions/
  ├── elastic/
@@ -60,67 +46,52 @@ mappings/
 
 ---
 
-## 🛠️ Data Sources & Technologies
+## 🛠️ Fontes de Dados
 
-* Windows Security Logs
+* Logs de Segurança do Windows
 * Sysmon
 * Microsoft Defender for Endpoint
-* Microsoft Sentinel
 * Elastic Stack (ELK)
-* Azure / Entra ID
-* Office 365 Audit Logs
 
 ---
 
-## 📜 Rule Development Standard
+## 📜 Padrão das Regras
 
-Each rule follows:
+Cada regra segue os seguintes critérios:
 
-* Sigma format
-* MITRE ATT&CK mapping
-* Atomic Red Team validation (when applicable)
-* False positive analysis
-* Severity classification
+* Formato Sigma
+* Mapeamento MITRE ATT&CK
+* Análise de falso positivo
+* Classificação de severidade
+* Validação em laboratório
 
 ---
 
-## 🧪 Lab Validation
+## 🧪 Validação em Laboratório
 
-Detections are tested using:
+As detecções são testadas utilizando:
 
 * Atomic Red Team
-* Manual adversary simulation
-* PowerShell tradecraft
-* Registry & persistence techniques
+* Simulação manual de ataques
+* Técnicas com PowerShell
+* Cenários de persistência e pós-exploração
 
 ---
 
-## 🚀 Featured Use Cases
-
-| MITRE Technique | Detection Use Case           |
-| --------------- | ---------------------------- |
-| T1547.001       | Run Registry Key Persistence |
-| T1053           | Scheduled Task Creation      |
-| T1546           | Event Triggered Execution    |
-| T1112           | Registry Modification        |
-
----
-
-## 👨‍💻 Author
+## 👨‍💻 Autor
 
 **Luiz Junior**
-Detection Engineer | Blue Team | Threat Detection
+Detection Engineer | Blue Team | Threat Hunting
 
-* Focus: Detection Engineering & Threat Hunting
-* Specialization: Sigma • SIEM • MITRE ATT&CK
-
----
-
-## 📌 Disclaimer
-
-This repository is for educational and defensive security purposes only.
-All detections are based on publicly known adversary techniques.
+Foco: Detection Engineering & Threat Hunting
+Especialização: Sigma • SIEM • MITRE ATT&CK
 
 ---
 
-⭐ If you find this repository useful, feel free to star it.
+## 📌 Aviso
+
+Este repositório é destinado exclusivamente para fins educacionais e defesa em segurança da informação.
+
+---
+
+⭐ Se este projeto for útil para você, considere dar uma estrela.
