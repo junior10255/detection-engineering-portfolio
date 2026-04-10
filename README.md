@@ -35,15 +35,6 @@ sigma/
  ├── exfiltration/
  └── impact/
 
-conversions/
- ├── elastic/
- ├── sentinel/
- └── splunk/
-
-mappings/
- └── mitre_attack_mapping.md
-```
-
 ---
 
 ## 🛠️ Fontes de Dados
