@@ -16,7 +16,7 @@ Todas as detecções são mapeadas ao framework MITRE ATT&CK® e projetadas para
 
 ---
 
-## 📂 Estrutura do Repositório
+📂 Estrutura do Repositório
 
 ```id="f0r2k9"
 sigma/
@@ -37,7 +37,7 @@ sigma/
 
 ---
 
-## 🛠️ Fontes de Dados
+🛠️ Fontes de Dados
 
 * Logs de Segurança do Windows
 * Sysmon
@@ -46,7 +46,7 @@ sigma/
 
 ---
 
-## 📜 Padrão das Regras
+📜 Padrão das Regras
 
 Cada regra segue os seguintes critérios:
 
@@ -58,7 +58,7 @@ Cada regra segue os seguintes critérios:
 
 ---
 
-## 🧪 Validação em Laboratório
+🧪 Validação em Laboratório
 
 As detecções são testadas utilizando:
 
@@ -69,7 +69,7 @@ As detecções são testadas utilizando:
 
 ---
 
-## 👨‍💻 Autor
+👨‍💻 Autor
 
 **Luiz Junior**
 Detection Engineer | Blue Team | Threat Hunting
@@ -79,7 +79,7 @@ Especialização: Sigma • SIEM • MITRE ATT&CK
 
 ---
 
-## 📌 Aviso
+📌 Aviso
 
 Este repositório é destinado exclusivamente para fins educacionais e defesa em segurança da informação.
 
