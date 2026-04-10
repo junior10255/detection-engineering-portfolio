@@ -10,9 +10,9 @@ wmic shadowcopy delete
 
 Nota: Este comando remove todos os pontos de restauração (Volume Shadow Copies) do Windows.
 
-Para capturar essa ação, utilizei telemetria do Sysmon). A query abaixo identifica a execução do binário wmic.exe interagindo com comandos de manipulação de backup.
+Para capturar essa ação, utilizei Sysmon. A query abaixo identifica a execução do binário wmic.exe interagindo com comandos de manipulação de backup.
 
-Query LUCENE (Elastic Security):
+Query LUCENE (Elastic):
 
 ```event.code:"1" AND winlog.event_data.Image:(*wmic.exe OR *WMIC.exe) AND winlog.event_data.CommandLine:(*shadowcopy* AND (*create* OR *delete* OR *resize*))```
 
