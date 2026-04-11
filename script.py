@@ -1,22 +1,28 @@
 #!/usr/bin/env python3
 """
-Detection Engineering Portfolio Organizer - Senior Edition v3.0
-=========================================================
-Correção Crítica: Case Sensitivity (Sigma vs sigma) e Links de Tabela.
+Detection Engineering Portfolio Organizer - v6 (Production Ready)
+
+Features:
+- CLI (--dry-run, --verbose)
+- Cache de metadados
+- Proteção contra sobrescrita (rename incremental)
+- Validação básica de regras Sigma
+- Estrutura automática de pastas
+- README dinâmico
+- Export de métricas (metrics.json)
 """
 
 import os
 import shutil
 import yaml
+import argparse
+import json
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import quote
 
-# --- CONFIGURAÇÃO ---
-NOME_USUARIO = "junior10255"
-REPO_NAME = "detection-engineering-portfolio"
+# ================= CONFIG ================= #
 
-# Mapeamento de táticas (Normalizado para minúsculas internamente)
 MITRE_TACTICS = [
     'reconnaissance', 'resource_development', 'initial_access', 'execution',
     'persistence', 'privilege_escalation', 'defense_evasion', 'credential_access',
@@ -25,130 +31,238 @@ MITRE_TACTICS = [
 ]
 
 ID_TO_TACTIC = {
-    't1595': 'reconnaissance', 't1566': 'initial_access', 
-    't1059': 'execution', 't1047': 'execution',
-    't1053': 'persistence', 't1021': 'lateral_movement',
-    't1485': 'impact', 't1486': 'impact'
+    't1595': 'reconnaissance',
+    't1566': 'initial_access',
+    't1059': 'execution',
+    't1047': 'execution',
+    't1053': 'persistence',
+    't1547': 'persistence',
+    't1021': 'lateral_movement',
+    't1485': 'impact'
 }
 
-def extrair_metadados_sigma(caminho_arquivo):
-    """Lê o YAML e extrai o nível e a tática via tags."""
-    metadados = {'tatica': 'execution', 'level': 'medium'}
+CACHE = {}
+
+# ================= LOG ================= #
+
+def log(msg, verbose):
+    if verbose:
+        print(msg)
+
+# ================= METADATA ================= #
+
+def extrair_metadados_sigma(path, verbose=False):
+    if path in CACHE:
+        return CACHE[path]
+
+    meta = {'tatica': 'execution', 'level': 'low'}
+
     try:
-        with open(caminho_arquivo, 'r', encoding='utf-8', errors='ignore') as f:
+        with open(path, 'r', encoding='utf-8', errors='ignore') as f:
             data = yaml.safe_load(f)
-            if not data: return metadados
-            
-            metadados['level'] = str(data.get('level', 'medium')).lower()
-            tags = data.get('tags', [])
-            if not isinstance(tags, list): tags = [tags]
 
-            for tag in tags:
-                tag = str(tag).lower()
-                if 'attack.' in tag:
-                    # Tenta ID (t1047)
-                    for tid, tac in ID_TO_TACTIC.items():
-                        if tid in tag:
-                            metadados['tatica'] = tac
-                            return metadados
-                    # Tenta Nome direto
-                    for tac in MITRE_TACTICS:
-                        if tac in tag.replace('-', '_'):
-                            metadados['tatica'] = tac
-                            return metadados
-    except:
-        pass
-    return metadados
+        if not data or not isinstance(data, dict):
+            CACHE[path] = meta
+            return meta
 
-def organizar_e_gerar():
-    print("🚀 Iniciando Sincronização de Portfólio...")
-    base_path = os.path.abspath('.')
-    
-    # 1. Localizar a pasta Sigma (independente de maiúsculas)
-    sigma_folder_name = "Sigma" # Padrão desejado
-    atual_sigma = None
-    for d in os.listdir(base_path):
-        if d.lower() == "sigma" and os.path.isdir(d):
-            atual_sigma = d
-            sigma_folder_name = d # Mantém o que o usuário já tem (ex: "Sigma")
-            break
-    
-    if not atual_sigma:
-        os.makedirs(sigma_folder_name, exist_ok=True)
-        atual_sigma = sigma_folder_name
+        meta['level'] = str(data.get('level', 'low')).lower()
 
-    # 2. Criar subpastas de táticas dentro de Sigma
+        # Validação básica Sigma
+        required_fields = ['title', 'logsource', 'detection']
+        missing = [f for f in required_fields if f not in data]
+        if missing:
+            log(f"⚠️ Campos ausentes {missing} em {path}", verbose)
+
+        tags = data.get('tags', [])
+        if not isinstance(tags, list):
+            tags = [tags]
+
+        tags = [str(t).lower() for t in tags]
+
+        # 1. Tática direta
+        for tag in tags:
+            if tag.startswith('attack.') and not tag.startswith('attack.t'):
+                nome = tag.split('.')[1].replace('-', '_')
+                if nome in MITRE_TACTICS:
+                    meta['tatica'] = nome
+                    CACHE[path] = meta
+                    return meta
+
+        # 2. Técnica ID
+        for tag in tags:
+            if tag.startswith('attack.t'):
+                tid = tag.split('.')[1].split('.')[0]
+                if tid in ID_TO_TACTIC:
+                    meta['tatica'] = ID_TO_TACTIC[tid]
+                    CACHE[path] = meta
+                    return meta
+
+    except yaml.YAMLError as e:
+        log(f"❌ YAML inválido: {path} -> {e}", verbose)
+    except Exception as e:
+        log(f"❌ Erro ao processar {path}: {e}", verbose)
+
+    CACHE[path] = meta
+    return meta
+
+# ================= FILE OPS ================= #
+
+def safe_move(src, dst, dry_run=False, verbose=False):
+    if not os.path.exists(dst):
+        if not dry_run:
+            shutil.move(src, dst)
+        log(f"✔️ {src} -> {dst}", verbose)
+        return
+
+    base, ext = os.path.splitext(dst)
+    counter = 1
+
+    while True:
+        new_dst = f"{base}_{counter}{ext}"
+        if not os.path.exists(new_dst):
+            if not dry_run:
+                shutil.move(src, new_dst)
+            log(f"⚠️ Renomeado: {src} -> {new_dst}", verbose)
+            return
+        counter += 1
+
+# ================= STRUCTURE ================= #
+
+def criar_pastas(base, verbose=False):
+    # Pastas auxiliares
+    for aux in ['research/pocs', 'img', 'tools']:
+        os.makedirs(os.path.join(base, aux), exist_ok=True)
+
+    sigma_path = os.path.join(base, "Sigma")
+    os.makedirs(sigma_path, exist_ok=True)
+
     for t in MITRE_TACTICS:
-        path = os.path.join(atual_sigma, t)
+        path = os.path.join(sigma_path, t)
         os.makedirs(path, exist_ok=True)
-        if not os.path.exists(os.path.join(path, ".gitkeep")):
-            Path(os.path.join(path, ".gitkeep")).touch()
 
-    # 3. Mover ficheiros soltos na raiz para as pastas corretas
-    for item in os.listdir(base_path):
-        if item.lower().endswith(('.yml', '.yaml')):
-            meta = extrair_metadados_sigma(item)
-            dest = os.path.join(atual_sigma, meta['tatica'], item)
-            print(f"📦 Movendo {item} -> {meta['tatica']}")
-            shutil.move(item, dest)
+    # .gitkeep
+    for root, dirs, files in os.walk(sigma_path):
+        if not files:
+            Path(os.path.join(root, ".gitkeep")).touch(exist_ok=True)
 
-    # 4. Gerar o README Estilizado (conforme as imagens)
-    print("📝 Construindo README.md...")
-    total_regras = 0
-    tabela_regras = ""
-    regras_por_tatica = {t: 0 for t in MITRE_TACTICS}
+    log("📁 Estrutura criada", verbose)
+    return sigma_path
 
-    # Varrer a pasta Sigma para a tabela
-    for tatica in MITRE_TACTICS:
-        pasta_t = os.path.join(atual_sigma, tatica)
-        if os.path.exists(pasta_t):
-            arquivos = [f for f in os.listdir(pasta_t) if f.lower().endswith(('.yml', '.yaml'))]
-            for arq in sorted(arquivos):
-                total_regras += 1
-                regras_por_tatica[tatica] += 1
-                info = extrair_metadados_sigma(os.path.join(pasta_t, arq))
-                
-                # Ícone de Nível
-                cor = '🔴' if info['level'] in ['high', 'critical'] else '🟡' if info['level'] == 'medium' else '🔵'
-                
-                # Link formatado para o GitHub
-                link_arq = f"{sigma_folder_name}/{tatica}/{arq}"
-                
-                tabela_regras += f"| {cor} | {tatica.replace('_', ' ').title()} | `{arq}` | ✅ | [Analisar Regra]({link_arq}) |\n"
+# ================= ORGANIZER ================= #
 
-    taticas_ativas = sum(1 for c in regras_por_tatica.values() if c > 0)
-    progresso = int((taticas_ativas / 14) * 100)
-    data_att = datetime.now().strftime("%d/%m/%Y %H:%M")
+def organizar(base, sigma_path, dry_run=False, verbose=False):
+    script_name = os.path.basename(__file__)
 
-    readme_content = f"""# 🛡️ Detection Engineering Portfolio
+    for item in os.listdir(base):
+        if not os.path.isfile(item):
+            continue
 
-| Portfólio focado na criação de detecções e mapeamento ao framework MITRE ATT&CK®. |
-| :--- |
+        if item in ['README.md', script_name]:
+            continue
 
-![{progresso}%](https://img.shields.io/badge/PROGRESSO-{progresso}%25-orange)
-![Regras Sigma](https://img.shields.io/badge/Regras_Sigma-{total_regras}-orange)
-![Atualizado](https://img.shields.io/badge/Atualizado-{quote(data_att)}-green?color=97ca00)
+        lower = item.lower()
+        destino = None
 
-## 📊 Cobertura por Tática
-| Tática | Qtd Regras |
-| :--- | :---: |
-"""
+        if lower.endswith(('.yml', '.yaml')):
+            meta = extrair_metadados_sigma(item, verbose)
+            destino = os.path.join(sigma_path, meta['tatica'], item)
+
+        elif lower.endswith('.md'):
+            destino = os.path.join(base, "research", "pocs", item)
+
+        elif lower.endswith(('.png', '.jpg', '.jpeg', '.gif', '.svg')):
+            destino = os.path.join(base, "img", item)
+
+        if destino:
+            os.makedirs(os.path.dirname(destino), exist_ok=True)
+            safe_move(item, destino, dry_run, verbose)
+
+# ================= METRICS ================= #
+
+def export_metrics(base, contagem, total):
+    data = {
+        "total_rules": total,
+        "tactics": contagem,
+        "last_update": datetime.now().isoformat()
+    }
+
+    with open(os.path.join(base, "metrics.json"), "w") as f:
+        json.dump(data, f, indent=2)
+
+# ================= README ================= #
+
+def gerar_readme(base, sigma_path):
+    total = 0
+    contagem = {t: 0 for t in MITRE_TACTICS}
+    tabela = ""
+
     for t in MITRE_TACTICS:
-        if regras_por_tatica[t] > 0:
-            readme_content += f"| {t.replace('_', ' ').title()} | {regras_por_tatica[t]} |\n"
+        pasta = os.path.join(sigma_path, t)
+        if not os.path.exists(pasta):
+            continue
 
-    readme_content += f"""
-## 📜 Acervo de Regras (Sigma Rules)
-| Nível | Tática | Regra (Artefato) | Validação | Link |
-| :---: | :--- | :--- | :---: | :--- |
-{tabela_regras if tabela_regras else '| - | - | Nenhuma regra encontrada | - | - |'}
+        for arq in sorted(os.listdir(pasta)):
+            if arq.endswith(('.yml', '.yaml')):
+                total += 1
+                contagem[t] += 1
+
+                info = extrair_metadados_sigma(os.path.join(pasta, arq))
+
+                cor = '🔴' if info['level'] in ['high', 'critical'] else '🟡' if info['level'] == 'medium' else '🔵'
+                link = f"{os.path.basename(sigma_path)}/{t}/{arq}"
+
+                tabela += f"| {cor} | {t.replace('_',' ').title()} | `{arq}` | [Link]({link}) |\n"
+
+    progresso = int((sum(1 for v in contagem.values() if v > 0) / len(MITRE_TACTICS)) * 100)
+    data = quote(datetime.now().strftime("%d/%m/%Y %H:%M"))
+
+    readme = f"""# 🛡️ Detection Engineering Portfolio
+
+![Progress](https://img.shields.io/badge/PROGRESS-{progresso}%25-orange)
+![Rules](https://img.shields.io/badge/Sigma-{total}-blue)
+![Updated](https://img.shields.io/badge/Updated-{data}-green)
+
+## 📊 Cobertura
+| Tática | Qtd |
+|---|---|
+"""
+
+    for t in MITRE_TACTICS:
+        readme += f"| {t.replace('_',' ').title()} | {contagem[t]} |\n"
+
+    readme += f"""
+## 📜 Regras
+| Nível | Tática | Nome | Link |
+|---|---|---|---|
+{tabela if tabela else '| - | - | - | - |'}
 
 ---
-*README atualizado automaticamente via script de automação.*
+*Auto-generated*
 """
-    with open("README.md", "w", encoding="utf-8") as f:
-        f.write(readme_content)
-    print(f"✨ Sucesso! {total_regras} regras catalogadas.")
+
+    with open(os.path.join(base, "README.md"), "w", encoding="utf-8") as f:
+        f.write(readme)
+
+    export_metrics(base, contagem, total)
+    return total
+
+# ================= CLI ================= #
+
+def main():
+    parser = argparse.ArgumentParser(description="Detection Portfolio Organizer v6")
+    parser.add_argument("--dry-run", action="store_true", help="Simula execução")
+    parser.add_argument("--verbose", action="store_true", help="Logs detalhados")
+
+    args = parser.parse_args()
+    base = os.path.abspath('.')
+
+    print("🚀 Organizer v6 iniciado")
+
+    sigma_path = criar_pastas(base, args.verbose)
+    organizar(base, sigma_path, args.dry_run, args.verbose)
+    total_rules = gerar_readme(base, sigma_path)
+
+    print(f"✅ Finalizado | {total_rules} regras Sigma | {len(CACHE)} arquivos analisados")
 
 if __name__ == "__main__":
-    organizar_e_gerar()
+    main()

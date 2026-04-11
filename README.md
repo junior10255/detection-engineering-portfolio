@@ -2,7 +2,7 @@
 
 ![Progress](https://img.shields.io/badge/PROGRESS-14%25-orange)
 ![Rules](https://img.shields.io/badge/Sigma-2-blue)
-![Updated](https://img.shields.io/badge/Updated-11/04/2026%2016%3A59-green)
+![Updated](https://img.shields.io/badge/Updated-11/04/2026%2017%3A07-green)
 
 ## 📊 Cobertura
 | Tática | Qtd |
