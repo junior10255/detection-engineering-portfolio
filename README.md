@@ -4,7 +4,7 @@
 
 ![Cobertura MITRE](https://geps.dev/progress/14?dangerColor=ff4b2b&warningColor=f9d423&successColor=00ff87)
 ![Regras](https://img.shields.io/badge/Regras_Sigma-2-orange)
-![Update](https://img.shields.io/badge/Atualizado-11/04/2026_16:09-green)
+![Update](https://img.shields.io/badge/Atualizado-11/04/2026_16:10-green)
 
 ## 📊 Cobertura por Tática
 | Tática | Qtd Regras |
