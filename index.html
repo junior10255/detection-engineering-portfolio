@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Detection Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<h2>MITRE Coverage</h2>
+<canvas id="chart"></canvas>
+
+<script>
+fetch('../metrics.json')
+.then(r => r.json())
+.then(data => {
+    const ctx = document.getElementById('chart');
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: Object.keys(data.tactics),
+            datasets: [{
+                label: 'Regras por Tática',
+                data: Object.values(data.tactics)
+            }]
+        }
+    });
+});
+</script>
+
+</body>
+</html>
