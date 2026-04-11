@@ -2,12 +2,34 @@
     "global_coverage": 21.43,
     "active_density": 1.0,
     "high_impact_ratio": 66.67,
+    "average_quality": 100.0,
     "total_rules": 3,
+    "tactics_covered": 3,
+    "missing_tactics": [
+        "reconnaissance",
+        "resource_development",
+        "initial_access",
+        "privilege_escalation",
+        "defense_evasion",
+        "credential_access",
+        "discovery",
+        "lateral_movement",
+        "collection",
+        "command_and_control",
+        "exfiltration"
+    ],
+    "invalid_rules": 0,
     "severity_distribution": {
         "critical": 0,
         "high": 2,
         "medium": 1,
         "low": 0
     },
-    "last_update": "2026-04-11T18:54:47.503569"
+    "top_authors": {
+        "Luiz Junior": 3
+    },
+    "top_logsources": {
+        "windows/any": 3
+    },
+    "last_update": "2026-04-11T18:57:54.954545"
 }
