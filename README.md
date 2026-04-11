@@ -1,22 +1,33 @@
 # 🛡️ Detection Engineering Portfolio
 
-| Portfólio focado na criação de detecções e mapeamento ao framework MITRE ATT&CK®. |
-| :--- |
+![Progress](https://img.shields.io/badge/PROGRESS-14%25-orange)
+![Rules](https://img.shields.io/badge/Sigma-2-blue)
+![Updated](https://img.shields.io/badge/Updated-11/04/2026%2016%3A59-green)
 
-![7%](https://img.shields.io/badge/PROGRESSO-7%25-orange)
-![Regras Sigma](https://img.shields.io/badge/Regras_Sigma-1-orange)
-![Atualizado](https://img.shields.io/badge/Atualizado-11/04/2026%2016%3A43-green?color=97ca00)
-
-## 📊 Cobertura por Tática
-| Tática | Qtd Regras |
-| :--- | :---: |
+## 📊 Cobertura
+| Tática | Qtd |
+|---|---|
+| Reconnaissance | 0 |
+| Resource Development | 0 |
+| Initial Access | 0 |
+| Execution | 0 |
+| Persistence | 1 |
+| Privilege Escalation | 0 |
+| Defense Evasion | 0 |
+| Credential Access | 0 |
+| Discovery | 0 |
+| Lateral Movement | 0 |
+| Collection | 0 |
+| Command And Control | 0 |
+| Exfiltration | 0 |
 | Impact | 1 |
 
-## 📜 Acervo de Regras (Sigma Rules)
-| Nível | Tática | Regra (Artefato) | Validação | Link |
-| :---: | :--- | :--- | :---: | :--- |
-| 🔴 | Impact | `01_manipulating_shadow_copies_via_WMIC.yml` | ✅ | [Analisar Regra](Sigma/impact/01_manipulating_shadow_copies_via_WMIC.yml) |
+## 📜 Regras
+| Nível | Tática | Nome | Link |
+|---|---|---|---|
+| 🟡 | Persistence | `01_persistence_via_run_registry_key.yml` | [Link](Sigma/persistence/01_persistence_via_run_registry_key.yml) |
+| 🔴 | Impact | `01_manipulating_shadow_copies_via_WMIC.yml` | [Link](Sigma/impact/01_manipulating_shadow_copies_via_WMIC.yml) |
 
 
 ---
-*README atualizado automaticamente via script de automação.*
+*Auto-generated*
