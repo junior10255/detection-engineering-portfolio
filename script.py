@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 """
-Detection Engineering Portfolio - Xtreme v14.1 (Architect Edition)
-=====================================================================
-✔ FIXED: Agora lê regras dentro de subpastas de 'Sigma' (Deep Scan).
-✔ Densidade real: regras por tática ATIVA (profundidade).
-✔ Ordenação SOC-first: severidade → qualidade.
-✔ Análise de GAPs: táticas descobertas listadas explicitamente.
-✔ High Impact Ratio: % de regras críticas/altas.
+Detection Engineering Portfolio - Xtreme v14.1 (Architect Edition - Fix)
+========================================================================
+✔ Corrigido: Agora processa regras já existentes em Sigma/ (não as ignora).
+✔ Mantém todas as métricas avançadas e ordenação SOC.
+✔ Movimentação segura apenas para arquivos fora do local correto.
 """
 
 import os
@@ -69,6 +67,12 @@ def safe_write(path, content):
         if os.path.exists(temp_p):
             os.remove(temp_p)
         log(f"ERRO DE ESCRITA: {e}")
+
+def append_audit_log(base, lines):
+    log_path = os.path.join(base, 'audit', 'process.log')
+    os.makedirs(os.path.dirname(log_path), exist_ok=True)
+    with open(log_path, 'a', encoding='utf-8') as f:
+        f.write("\n".join(lines) + "\n")
 
 def aplicar_heuristica(data):
     content_str = str(data).lower()
@@ -133,7 +137,6 @@ def processar_sigma(path):
         if not found:
             meta['tatica'] = aplicar_heuristica(data)
 
-        # Contabiliza apenas se for um processamento válido
         GLOBAL_STATS['severity'][meta['level']] += 1
         GLOBAL_STATS['authors'][meta['author']] = GLOBAL_STATS['authors'].get(meta['author'], 0) + 1
         GLOBAL_STATS['logsources'][meta['logsource']] = GLOBAL_STATS['logsources'].get(meta['logsource'], 0) + 1
@@ -145,66 +148,70 @@ def processar_sigma(path):
 
 def main():
     base = os.getcwd()
-    log("Iniciando Xtreme Organizer v14.1 (Deep Scan)...")
+    log("Iniciando Xtreme Organizer v14.1...")
 
-    # Garante estrutura inicial
+    # Cria estrutura de pastas (inclui Sigma e auxiliares)
     for t in MITRE_TACTICS + ['uncategorized']:
         os.makedirs(os.path.join(base, 'Sigma', t), exist_ok=True)
     for p in EXTRA_FOLDERS:
         os.makedirs(os.path.join(base, p), exist_ok=True)
 
-    # REMOVIDO 'Sigma' de ignored_dirs para permitir a leitura das regras que já estão lá
+    # Diretórios a ignorar completamente (não processar arquivos de dentro)
+    # NOTA: 'Sigma' NÃO está mais na lista para que as regras existentes sejam lidas.
     ignored_dirs = {'.git', 'audit', 'img', 'research', 'tools'}
     ignored_files = {'README.md', 'metrics.json', SCRIPT_NAME, '.gitignore'}
 
     inventory = []
 
+    # Primeira passada: processar TODOS os arquivos YAML (inclusive dentro de Sigma/)
+    # e mover apenas os que estão fora do lugar.
     for root, dirs, files in os.walk(base, topdown=True):
-        # Filtra diretórios ignorados
+        # Poda apenas os diretórios que queremos ignorar totalmente
         dirs[:] = [d for d in dirs if d not in ignored_dirs]
 
         for f in files:
             if f in ignored_files:
                 continue
-            
             old_path = os.path.join(root, f)
             destino = None
 
-            # Processamento de regras Sigma
             if f.endswith(('.yml', '.yaml')):
                 meta = processar_sigma(old_path)
                 if meta:
-                    destino = os.path.join(base, 'Sigma', meta['tatica'], f)
+                    # Destino ideal baseado na tática extraída
+                    destino_ideal = os.path.join(base, 'Sigma', meta['tatica'], f)
+                    # Adiciona ao inventário sempre (independente de onde está)
                     inventory.append({
                         'file': f,
                         'tactic': meta['tatica'],
                         'level': meta['level'],
-                        'score_percent': meta['score_percent']
+                        'score': meta['score'],
+                        'score_percent': meta['score_percent'],
+                        'author': meta['author'],
+                        'logsource': meta['logsource']
                     })
+                    # Move apenas se não estiver no local correto
+                    if old_path != destino_ideal:
+                        destino = destino_ideal
                 else:
                     log(f"Regra inválida ignorada: {f}")
-            
-            # Processamento de Imagens
             elif f.endswith(('.png', '.jpg', '.jpeg', '.gif', '.svg')):
-                destino = os.path.join(base, 'img', f)
-            
-            # Processamento de MDs soltos (vira pesquisa/poc)
+                # Move imagens soltas para img/
+                if not old_path.startswith(os.path.join(base, 'img')):
+                    destino = os.path.join(base, 'img', f)
             elif f.endswith('.md') and root == base:
+                # Move markdown da raiz para research/pocs
                 destino = os.path.join(base, 'research', 'pocs', f)
 
-            # Só move se o destino for diferente da origem
-            if destino and os.path.abspath(old_path) != os.path.abspath(destino):
+            if destino and old_path != destino:
                 os.makedirs(os.path.dirname(destino), exist_ok=True)
                 if not os.path.exists(destino):
                     shutil.move(old_path, destino)
-                    log(f"Movido: {f} -> {meta['tatica'] if f.endswith(('.yml', '.yaml')) else 'Assets'}")
+                    log(f"Movido: {f} -> {destino}")
                 else:
-                    # Se já existe no destino mas estamos lendo de outro lugar, deleta a cópia velha
-                    if os.path.abspath(old_path) != os.path.abspath(destino):
-                        os.remove(old_path)
-                        log(f"Removida duplicata: {f}")
+                    log(f"Pulando (já existe no destino): {f}")
 
-    # Cálculos das Métricas
+    # Métricas
     total_rules = len(inventory)
     covered_set = {i['tactic'] for i in inventory if i['tactic'] != 'uncategorized'}
     taticas_cobertas = len(covered_set)
@@ -213,20 +220,30 @@ def main():
     cov_global = round((taticas_cobertas / len(MITRE_TACTICS)) * 100, 2) if total_rules else 0
     density = round(total_rules / taticas_cobertas, 2) if taticas_cobertas else 0
     avg_quality = round(sum(i['score_percent'] for i in inventory) / total_rules, 2) if total_rules else 0
+
     high_impact = GLOBAL_STATS['severity']['critical'] + GLOBAL_STATS['severity']['high']
     impact_ratio = round((high_impact / total_rules) * 100, 2) if total_rules else 0
 
-    # Ordenação SOC (Risco -> Qualidade)
+    # Ordenação SOC
     sev_rank = {'critical': 4, 'high': 3, 'medium': 2, 'low': 1}
-    sorted_inventory = sorted(inventory, key=lambda x: (sev_rank.get(x['level'], 0), x['score_percent']), reverse=True)
+    sorted_inventory = sorted(
+        inventory,
+        key=lambda x: (sev_rank.get(x['level'], 0), x['score_percent']),
+        reverse=True
+    )
 
-    # Tabela MD
     emoji = {'critical': '🔴', 'high': '🟠', 'medium': '🟡', 'low': '🔵'}
     table = "| Nível | Tática | Regra | Qualidade |\n|:---:|:---|:---|:---:|\n"
     for item in sorted_inventory:
         table += f"| {emoji.get(item['level'], '⚪')} | {item['tactic'].replace('_', ' ').title()} | `{item['file']}` | {item['score_percent']}% |\n"
 
-    gaps_section = "## ✅ Cobertura Completa\n" if not missing else "## 🚨 Coverage Gaps\n" + "\n".join([f"- {t.replace('_', ' ').title()}" for t in missing])
+    gaps_section = ""
+    if missing:
+        gaps_section = "## 🚨 Coverage Gaps\n"
+        for t in missing:
+            gaps_section += f"- {t.replace('_', ' ').title()}\n"
+    else:
+        gaps_section = "## ✅ Cobertura Completa\nTodas as 14 táticas do MITRE ATT&CK possuem pelo menos uma detecção.\n"
 
     readme = f"""# 🛡️ Detection Engineering Portfolio
 
@@ -239,34 +256,40 @@ def main():
 - **Total de Regras:** {total_rules}
 - **Táticas Cobertas:** {taticas_cobertas} / {len(MITRE_TACTICS)}
 - **Densidade Real:** {density} regras por tática ativa
+- **Qualidade Média:** {avg_quality}%
+- **Regras Inválidas Ignoradas:** {GLOBAL_STATS['invalid_count']}
 - **Impacto Alto (Critical/High):** {impact_ratio}% das regras
 
 {gaps_section}
 
-## 📋 Detection Inventory (Priorizado)
+## 📋 Detection Inventory (ordenado por risco)
 {table}
 
 ---
 *Gerado via {SCRIPT_NAME} v14.1 em {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*
 """
+
     safe_write(os.path.join(base, "README.md"), readme)
 
     full_metrics = {
         "global_coverage": cov_global,
         "active_density": density,
         "high_impact_ratio": impact_ratio,
+        "average_quality": avg_quality,
         "total_rules": total_rules,
+        "tactics_covered": taticas_cobertas,
+        "missing_tactics": missing,
+        "invalid_rules": GLOBAL_STATS['invalid_count'],
         "severity_distribution": GLOBAL_STATS['severity'],
+        "top_authors": dict(sorted(GLOBAL_STATS['authors'].items(), key=lambda x: x[1], reverse=True)[:5]),
+        "top_logsources": dict(sorted(GLOBAL_STATS['logsources'].items(), key=lambda x: x[1], reverse=True)[:5]),
         "last_update": datetime.now().isoformat()
     }
     safe_write(os.path.join(base, "metrics.json"), json.dumps(full_metrics, indent=4))
-    
-    # Audit log persistence
-    log_path = os.path.join(base, 'audit', 'process.log')
-    with open(log_path, 'a', encoding='utf-8') as f:
-        f.write("\n".join(GLOBAL_STATS["audit_log"]) + "\n")
 
-    log(f"Finalizado! {total_rules} regras detectadas em subdiretórios.")
+    append_audit_log(base, GLOBAL_STATS["audit_log"])
+
+    log(f"Finalizado! Regras: {total_rules} | Cobertura: {cov_global}% | Densidade Ativa: {density} | High Impact: {impact_ratio}%")
 
 if __name__ == "__main__":
     main()

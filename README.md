@@ -9,6 +9,8 @@
 - **Total de Regras:** 3
 - **Táticas Cobertas:** 3 / 14
 - **Densidade Real:** 1.0 regras por tática ativa
+- **Qualidade Média:** 100.0%
+- **Regras Inválidas Ignoradas:** 0
 - **Impacto Alto (Critical/High):** 66.67% das regras
 
 ## 🚨 Coverage Gaps
@@ -24,13 +26,14 @@
 - Command And Control
 - Exfiltration
 
-## 📋 Detection Inventory (Priorizado)
+
+## 📋 Detection Inventory (ordenado por risco)
 | Nível | Tática | Regra | Qualidade |
 |:---:|:---|:---|:---:|
-| 🟠 | Impact | `01_manipulating_shadow_copies_via_WMIC.yml` | 100.0% |
 | 🟠 | Execution | `01_proc_creation_win_wmic_lateral_movement_ip.yml` | 100.0% |
+| 🟠 | Impact | `01_manipulating_shadow_copies_via_WMIC.yml` | 100.0% |
 | 🟡 | Persistence | `01_persistence_via_run_registry_key.yml` | 100.0% |
 
 
 ---
-*Gerado via script.py v14.1 em 2026-04-11 18:54:47*
+*Gerado via script.py v14.1 em 2026-04-11 18:57:54*
