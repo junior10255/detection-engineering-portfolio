@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 """
-Detection Engineering Portfolio - Xtreme v10.1 (Enterprise Hardened)
+Detection Engineering Portfolio - Xtreme v10.3 (Enterprise Hardened)
 ===================================================================
-✔ Fix cálculo de qualidade média
-✔ Proteção total contra crash (pastas / encoding)
+✔ Corrige duplicação de métricas (cache-safe)
+✔ Limpeza automática de arquivos de conflito (.orig, .bak, .rej)
 ✔ .gitkeep em toda estrutura
-✔ Proteção contra sobrescrita
-✔ Auditoria robusta
-✔ Pronto para CI/CD
+✔ Hardening para múltiplas execuções
+✔ Proteção contra encoding issues (Windows/Linux)
 """
 
 import os
@@ -40,7 +39,12 @@ ID_TO_TACTIC = {
     't1485': 'impact', 't1071': 'command_and_control'
 }
 
+# =========================
+# GLOBAL STATE
+# =========================
 CACHE = {}
+PROCESSED = set()
+
 GLOBAL_STATS = {
     "invalid": 0,
     "severity": {"critical": 0, "high": 0, "medium": 0, "low": 0},
@@ -52,20 +56,28 @@ GLOBAL_STATS = {
 # =========================
 # UTIL
 # =========================
-def get_script_name():
-    try:
-        return os.path.basename(__file__)
-    except:
-        return "script.py"
-
-
 def log_audit(msg):
     GLOBAL_STATS["audit_log"].append(f"[{datetime.now().isoformat()}] {msg}")
 
+def clean_conflicts(base):
+    """Remove arquivos de conflito de merge automaticamente"""
+    for root, _, files in os.walk(base):
+        for f in files:
+            if f.endswith(('.orig', '.bak', '.rej')):
+                try:
+                    os.remove(os.path.join(root, f))
+                    log_audit(f"REMOVIDO conflito: {f}")
+                except:
+                    pass
 
-# =========================
-# SCORE
-# =========================
+def ensure_gitkeep(base):
+    """Garante .gitkeep em todas pastas vazias"""
+    for root, dirs, files in os.walk(base):
+        if '.git' in root:
+            continue
+        if not files and not dirs:
+            Path(os.path.join(root, '.gitkeep')).touch(exist_ok=True)
+
 def calcular_score(data):
     score = 0
     weights = {
@@ -80,7 +92,6 @@ def calcular_score(data):
         if data.get(field):
             score += points
     return score
-
 
 # =========================
 # METADATA
@@ -107,26 +118,29 @@ def extrair_metadados(path):
             CACHE[path] = meta
             return meta
 
-        meta['level'] = str(data.get('level', 'low')).lower()
-        meta['author'] = data.get('author', 'Unknown')
-        meta['score'] = calcular_score(data)
+        # evitar duplicação de métricas
+        if path not in PROCESSED:
+            meta['level'] = str(data.get('level', 'low')).lower()
+            meta['author'] = data.get('author', 'Unknown')
+            meta['score'] = calcular_score(data)
 
-        # Logsource
-        ls = data.get('logsource', {})
-        ls_str = f"{ls.get('product','any')}/{ls.get('service','any')}"
-        meta['logsource'] = ls_str
+            # logsource
+            ls = data.get('logsource', {})
+            ls_str = f"{ls.get('product','any')}/{ls.get('service','any')}"
+            meta['logsource'] = ls_str
 
-        # Stats
-        GLOBAL_STATS['severity'][meta['level']] = GLOBAL_STATS['severity'].get(meta['level'], 0) + 1
-        GLOBAL_STATS['logsources'][ls_str] = GLOBAL_STATS['logsources'].get(ls_str, 0) + 1
-        GLOBAL_STATS['authors'][meta['author']] = GLOBAL_STATS['authors'].get(meta['author'], 0) + 1
+            # stats
+            GLOBAL_STATS['severity'][meta['level']] = GLOBAL_STATS['severity'].get(meta['level'], 0) + 1
+            GLOBAL_STATS['logsources'][ls_str] = GLOBAL_STATS['logsources'].get(ls_str, 0) + 1
+            GLOBAL_STATS['authors'][meta['author']] = GLOBAL_STATS['authors'].get(meta['author'], 0) + 1
 
-        # Validação
-        if not all(k in data for k in ['title', 'logsource', 'detection']):
-            meta['valid'] = False
-            GLOBAL_STATS['invalid'] += 1
+            if not all(k in data for k in ['title', 'logsource', 'detection']):
+                meta['valid'] = False
+                GLOBAL_STATS['invalid'] += 1
 
-        # MITRE
+            PROCESSED.add(path)
+
+        # MITRE mapping
         tags = data.get('tags', [])
         if isinstance(tags, list):
             for tag in [str(t).lower() for t in tags]:
@@ -142,16 +156,15 @@ def extrair_metadados(path):
                         break
 
     except Exception as e:
-        log_audit(f"Erro em {path}: {e}")
         meta['valid'] = False
         GLOBAL_STATS['invalid'] += 1
+        log_audit(f"ERRO leitura {path}: {e}")
 
     CACHE[path] = meta
     return meta
 
-
 # =========================
-# ESTRUTURA
+# ORGANIZAÇÃO
 # =========================
 def preparar_estrutura(base):
     for t in MITRE_TACTICS:
@@ -160,26 +173,14 @@ def preparar_estrutura(base):
     for p in EXTRA_FOLDERS:
         os.makedirs(os.path.join(base, p), exist_ok=True)
 
-    # .gitkeep global
-    for root, dirs, files in os.walk(base):
-        if '.git' in root:
-            continue
-        if not files and not dirs:
-            Path(os.path.join(root, '.gitkeep')).touch(exist_ok=True)
-
-
-# =========================
-# ORGANIZAÇÃO
-# =========================
 def organizar(base):
-    script = get_script_name()
+    script = os.path.basename(__file__) if "__file__" in globals() else "script.py"
 
     for f in os.listdir(base):
-        if f in ['README.md', 'metrics.json', script, 'index.html']:
+        if f in ['README.md', 'metrics.json', script, 'index.html', '.gitignore']:
             continue
 
         full = os.path.join(base, f)
-
         if not os.path.isfile(full):
             continue
 
@@ -195,31 +196,22 @@ def organizar(base):
         elif f.endswith(('.png', '.jpg', '.jpeg', '.svg')):
             destino = os.path.join(base, 'img', f)
 
-        if destino:
-            if os.path.exists(destino):
-                log_audit(f"IGNORADO (existe): {f}")
-            else:
-                shutil.move(full, destino)
-                log_audit(f"MOVIDO: {f} -> {destino}")
-
+        if destino and not os.path.exists(destino):
+            shutil.move(full, destino)
+            log_audit(f"MOVIDO: {f}")
 
 # =========================
-# DASHBOARD
+# DOCS
 # =========================
 def gerar_docs(base):
-    total = 0
-    scores = []
-    tabela = ""
+    total, scores, tabela = 0, [], ""
     counts = {t: 0 for t in MITRE_TACTICS}
 
     poc_dir = os.path.join(base, 'research/pocs')
-    pocs = []
-    if os.path.exists(poc_dir):
-        pocs = [os.path.splitext(f)[0] for f in os.listdir(poc_dir) if f.endswith('.md')]
+    pocs = [os.path.splitext(f)[0] for f in os.listdir(poc_dir) if f.endswith('.md')] if os.path.exists(poc_dir) else []
 
     for t in MITRE_TACTICS:
         pasta = os.path.join(base, 'Sigma', t)
-
         if not os.path.exists(pasta):
             continue
 
@@ -233,19 +225,16 @@ def gerar_docs(base):
 
                 cor = '🔴' if info['level'] in ['high', 'critical'] else '🟡' if info['level'] == 'medium' else '🔵'
 
-                link = f"Sigma/{t}/{f}"
-
                 poc_link = "---"
                 for p in pocs:
                     if p in f or os.path.splitext(f)[0] in p:
                         poc_link = f"[🔍 POC](research/pocs/{p}.md)"
                         break
 
-                tabela += f"| {cor} | {t.title()} | `{f}` | {info['score']}% | {poc_link} | [Regra]({link}) |\n"
+                tabela += f"| {cor} | {t.title()} | `{f}` | {info['score']}% | {poc_link} | [Regra](Sigma/{t}/{f}) |\n"
 
     avg_score = round(sum(scores) / len(scores), 2) if scores else 0
 
-    # JSON
     metrics = {
         "summary": {
             "total": total,
@@ -254,61 +243,49 @@ def gerar_docs(base):
         },
         "severity": GLOBAL_STATS['severity'],
         "tactics": counts,
-        "sources": GLOBAL_STATS['logsources'],
         "authors": GLOBAL_STATS['authors'],
+        "sources": GLOBAL_STATS['logsources'],
         "updated_at": datetime.now().isoformat()
     }
 
     with open(os.path.join(base, "metrics.json"), "w", encoding="utf-8") as f:
         json.dump(metrics, f, indent=4)
 
-    # README
-    gaps = [t.title() for t, c in counts.items() if c == 0]
-    data = quote(datetime.now().strftime("%d/%m/%Y %H:%M"))
+    data_label = quote(datetime.now().strftime("%d/%m/%Y %H:%M"))
 
-    readme = f"""# 🛡️ Detection Engineering Portfolio v10
+    readme = f"""# 🛡️ Detection Engineering Portfolio
 
 ![Quality](https://img.shields.io/badge/Quality-{avg_score}%25-brightgreen)
 ![Rules](https://img.shields.io/badge/Rules-{total}-blue)
-![Updated](https://img.shields.io/badge/Updated-{data}-orange)
+![Updated](https://img.shields.io/badge/Updated-{data_label}-orange)
 
-## 🎯 Gap Analysis
-{", ".join(gaps) if gaps else "Cobertura completa 🚀"}
-
-## 📜 Rules
+## 📜 Regras por Tática
 | Level | Tática | Nome | Score | POC | Link |
 | :---: | :--- | :--- | :---: | :---: | :--- |
 {tabela if tabela else '| - | - | vazio | - | - | - |'}
 
 ---
-*Generated by Xtreme Organizer v10.1*
+*Enterprise Organizer v10.3*
 """
 
     with open(os.path.join(base, "README.md"), "w", encoding="utf-8") as f:
         f.write(readme)
 
+    os.makedirs(os.path.join(base, "audit"), exist_ok=True)
     with open(os.path.join(base, "audit/process.log"), "w", encoding="utf-8") as f:
         f.write("\n".join(GLOBAL_STATS["audit_log"]))
-
-    return total, avg_score
-
 
 # =========================
 # MAIN
 # =========================
 if __name__ == "__main__":
     base = os.getcwd()
+    print("🚀 Xtreme Organizer v10.3 (Enterprise)")
 
-    print("🚀 Xtreme Organizer v10.1\n")
-
+    clean_conflicts(base)
     preparar_estrutura(base)
     organizar(base)
-    total, avg = gerar_docs(base)
+    ensure_gitkeep(base)
+    gerar_docs(base)
 
-    print("\n" + "="*50)
-    print(f"✅ Finalizado")
-    print(f"📊 Regras: {total}")
-    print(f"⭐ Qualidade média: {avg}%")
-    print(f"⚠️ Inválidas: {GLOBAL_STATS['invalid']}")
-    print(f"⚡ Analisadas: {len(CACHE)}")
-    print("="*50)
+    print("✅ Finalizado com sucesso (nível enterprise)")
