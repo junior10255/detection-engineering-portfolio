@@ -1,33 +1,22 @@
-# 🛡️ Detection Engineering Portfolio <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJndmR4N3R4N3R4N3R4N3R4N3R4N3R4N3R4N3R4N3R4JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/qgQUggAC3Pfv687qPC/giphy.gif" width="40">
+# 🛡️ Detection Engineering Portfolio
 
-> Repositório profissional para detecção de ameaças e emulação de adversários.
+| Portfólio focado na criação de detecções e mapeamento ao framework MITRE ATT&CK®. |
+| :--- |
 
-![MITRE Coverage](https://geps.dev/progress/0?dangerColor=ff4b2b&warningColor=f9d423&successColor=00ff87)
-![Sigma Rules](https://img.shields.io/badge/Sigma_Rules-0-orange?style=for-the-badge)
-![Last Update](https://img.shields.io/badge/Updated-11/04/2026%2016%3A36-blue?style=for-the-badge)
+![7%](https://img.shields.io/badge/PROGRESSO-7%25-orange)
+![Regras Sigma](https://img.shields.io/badge/Regras_Sigma-1-orange)
+![Atualizado](https://img.shields.io/badge/Atualizado-11/04/2026%2016%3A43-green?color=97ca00)
 
-## 📊 Cobertura MITRE ATT&CK®
-| Tática | Quantidade |
+## 📊 Cobertura por Tática
+| Tática | Qtd Regras |
 | :--- | :---: |
-| Reconnaissance | 0 |
-| Resource Development | 0 |
-| Initial Access | 0 |
-| Execution | 0 |
-| Persistence | 0 |
-| Privilege Escalation | 0 |
-| Defense Evasion | 0 |
-| Credential Access | 0 |
-| Discovery | 0 |
-| Lateral Movement | 0 |
-| Collection | 0 |
-| Command And Control | 0 |
-| Exfiltration | 0 |
-| Impact | 0 |
+| Impact | 1 |
 
-## 📋 Catálogo de Detecções Ativas
-| Nível | Tática | Regra (Artefato) | Status |
-| :---: | :--- | :--- | :---: |
-| - | - | Nenhuma regra catalogada | - |
+## 📜 Acervo de Regras (Sigma Rules)
+| Nível | Tática | Regra (Artefato) | Validação | Link |
+| :---: | :--- | :--- | :---: | :--- |
+| 🔴 | Impact | `01_manipulating_shadow_copies_via_WMIC.yml` | ✅ | [Analisar Regra](Sigma/impact/01_manipulating_shadow_copies_via_WMIC.yml) |
+
 
 ---
-*Script de automação v2.1 (Senior Edition) - Mantido por junior10255*
+*README atualizado automaticamente via script de automação.*

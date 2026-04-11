@@ -1,19 +1,8 @@
 #!/usr/bin/env python3
 """
-Detection Engineering Portfolio Organizer - Senior Edition
+Detection Engineering Portfolio Organizer - Senior Edition v3.0
 =========================================================
-Automatiza a estruturação de regras Sigma conforme o MITRE ATT&CK.
-Gera um README dinâmico com métricas e tabela de regras.
-
-Melhorias implementadas:
-- Cache de metadados para performance.
-- Proteção contra sobrescrita de arquivos.
-- Normalização de IDs MITRE (Technique vs Sub-technique).
-- Persistência recursiva de pastas (.gitkeep).
-- Codificação de URLs para Badges.
-
-Requer: pyyaml (pip install pyyaml)
-Autor: junior10255
+Correção Crítica: Case Sensitivity (Sigma vs sigma) e Links de Tabela.
 """
 
 import os
@@ -27,7 +16,7 @@ from urllib.parse import quote
 NOME_USUARIO = "junior10255"
 REPO_NAME = "detection-engineering-portfolio"
 
-# Lista oficial das 14 táticas do MITRE ATT&CK Enterprise
+# Mapeamento de táticas (Normalizado para minúsculas internamente)
 MITRE_TACTICS = [
     'reconnaissance', 'resource_development', 'initial_access', 'execution',
     'persistence', 'privilege_escalation', 'defense_evasion', 'credential_access',
@@ -35,197 +24,131 @@ MITRE_TACTICS = [
     'exfiltration', 'impact'
 ]
 
-# Mapeamento preciso de IDs para Táticas (Normalizado sem sub-técnicas)
 ID_TO_TACTIC = {
-    't1595': 'reconnaissance', 't1592': 'reconnaissance',
-    't1583': 'resource_development', 't1588': 'resource_development',
-    't1566': 'initial_access', 't1190': 'initial_access', 't1133': 'initial_access',
-    't1059': 'execution', 't1204': 'execution', 't1047': 'execution',
-    't1053': 'persistence', 't1136': 'persistence', 't1547': 'persistence',
-    't1548': 'privilege_escalation', 't1068': 'privilege_escalation',
-    't1562': 'defense_evasion', 't1070': 'defense_evasion', 't1027': 'defense_evasion',
-    't1003': 'credential_access', 't1555': 'credential_access', 't1212': 'credential_access',
-    't1087': 'discovery', 't1082': 'discovery', 't1018': 'discovery',
-    't1021': 'lateral_movement', 't1091': 'lateral_movement', 't1570': 'lateral_movement',
-    't1005': 'collection', 't1074': 'collection', 't1114': 'collection',
-    't1071': 'command_and_control', 't1090': 'command_and_control', 't1105': 'command_and_control',
-    't1048': 'exfiltration', 't1041': 'exfiltration',
-    't1485': 'impact', 't1486': 'impact', 't1489': 'impact'
+    't1595': 'reconnaissance', 't1566': 'initial_access', 
+    't1059': 'execution', 't1047': 'execution',
+    't1053': 'persistence', 't1021': 'lateral_movement',
+    't1485': 'impact', 't1486': 'impact'
 }
 
-EXTRA_FOLDERS = ['research/pocs', 'img', 'tools']
-
-# Cache global para evitar múltiplas leituras de arquivo
-METADATA_CACHE = {}
-
 def extrair_metadados_sigma(caminho_arquivo):
-    """Extrai tática e severidade com cache e normalização de tags."""
-    caminho_str = str(caminho_arquivo)
-    if caminho_str in METADATA_CACHE:
-        return METADATA_CACHE[caminho_str]
-
-    metadados = {'tatica': 'execution', 'level': 'low'}
-
+    """Lê o YAML e extrai o nível e a tática via tags."""
+    metadados = {'tatica': 'execution', 'level': 'medium'}
     try:
-        with open(caminho_arquivo, 'r', encoding='utf-8') as f:
+        with open(caminho_arquivo, 'r', encoding='utf-8', errors='ignore') as f:
             data = yaml.safe_load(f)
-            if not data or not isinstance(data, dict):
-                return metadados
+            if not data: return metadados
+            
+            metadados['level'] = str(data.get('level', 'medium')).lower()
+            tags = data.get('tags', [])
+            if not isinstance(tags, list): tags = [tags]
 
-        metadados['level'] = str(data.get('level', 'low')).lower()
-
-        tags = data.get('tags', [])
-        if not isinstance(tags, list):
-            tags = [tags]
-
-        for tag in tags:
-            tag = str(tag).lower().strip()
-
-            # Caso 1: Nome da tática explícito (attack.execution)
-            if tag.startswith('attack.') and not tag.startswith('attack.t'):
-                t_name = tag.split('.')[1].replace('-', '_')
-                if t_name in MITRE_TACTICS:
-                    metadados['tatica'] = t_name
-                    METADATA_CACHE[caminho_str] = metadados
-                    return metadados
-
-            # Caso 2: ID da técnica (attack.t1059.001)
-            elif tag.startswith('attack.t'):
-                # Normaliza: remove sub-técnica (ex: t1059.001 -> t1059)
-                tid = tag.split('.')[1].split('.')[0]
-                if tid in ID_TO_TACTIC:
-                    metadados['tatica'] = ID_TO_TACTIC[tid]
-                    METADATA_CACHE[caminho_str] = metadados
-                    return metadados
-
-    except Exception as e:
-        print(f"    ⚠️ Erro ao processar {caminho_arquivo}: {e}")
-
-    METADATA_CACHE[caminho_str] = metadados
+            for tag in tags:
+                tag = str(tag).lower()
+                if 'attack.' in tag:
+                    # Tenta ID (t1047)
+                    for tid, tac in ID_TO_TACTIC.items():
+                        if tid in tag:
+                            metadados['tatica'] = tac
+                            return metadados
+                    # Tenta Nome direto
+                    for tac in MITRE_TACTICS:
+                        if tac in tag.replace('-', '_'):
+                            metadados['tatica'] = tac
+                            return metadados
+    except:
+        pass
     return metadados
 
-
-def criar_estrutura_pastas():
-    """Cria pastas e garante .gitkeep recursivo para manter a estrutura no Git."""
-    print("📁 Criando estrutura de diretórios...")
-
-    pastas_alvo = [os.path.join('sigma', t) for t in MITRE_TACTICS] + EXTRA_FOLDERS
+def organizar_e_gerar():
+    print("🚀 Iniciando Sincronização de Portfólio...")
+    base_path = os.path.abspath('.')
     
-    for pasta in pastas_alvo:
-        os.makedirs(pasta, exist_ok=True)
+    # 1. Localizar a pasta Sigma (independente de maiúsculas)
+    sigma_folder_name = "Sigma" # Padrão desejado
+    atual_sigma = None
+    for d in os.listdir(base_path):
+        if d.lower() == "sigma" and os.path.isdir(d):
+            atual_sigma = d
+            sigma_folder_name = d # Mantém o que o usuário já tem (ex: "Sigma")
+            break
+    
+    if not atual_sigma:
+        os.makedirs(sigma_folder_name, exist_ok=True)
+        atual_sigma = sigma_folder_name
 
-    # Garante .gitkeep em todas as pastas vazias para persistência no repositório
-    for root, dirs, files in os.walk('.'):
-        # Ignora pastas de sistema
-        if '.git' in root or '__pycache__' in root:
-            continue
-        
-        # Se a pasta está vazia (ou só tem subpastas vazias), cria .gitkeep
-        if not files:
-            Path(os.path.join(root, '.gitkeep')).touch(exist_ok=True)
+    # 2. Criar subpastas de táticas dentro de Sigma
+    for t in MITRE_TACTICS:
+        path = os.path.join(atual_sigma, t)
+        os.makedirs(path, exist_ok=True)
+        if not os.path.exists(os.path.join(path, ".gitkeep")):
+            Path(os.path.join(path, ".gitkeep")).touch()
 
-    print("    ✅ Estrutura e persistência (.gitkeep) prontas.")
+    # 3. Mover ficheiros soltos na raiz para as pastas corretas
+    for item in os.listdir(base_path):
+        if item.lower().endswith(('.yml', '.yaml')):
+            meta = extrair_metadados_sigma(item)
+            dest = os.path.join(atual_sigma, meta['tatica'], item)
+            print(f"📦 Movendo {item} -> {meta['tatica']}")
+            shutil.move(item, dest)
 
-
-def mover_arquivos_soltos():
-    """Organiza arquivos da raiz com proteção contra sobrescrita."""
-    print("📦 Organizando arquivos soltos...")
-
-    arquivos_ignorados = {
-        os.path.basename(__file__),
-        'README.md', 'LICENSE', '.gitignore', '.gitattributes', 'requirements.txt'
-    }
-
-    for arquivo in os.listdir('.'):
-        if not os.path.isfile(arquivo) or arquivo in arquivos_ignorados:
-            continue
-
-        destino = None
-        nome_lower = arquivo.lower()
-
-        if nome_lower.endswith(('.yml', '.yaml')):
-            meta = extrair_metadados_sigma(arquivo)
-            destino = os.path.join('sigma', meta['tatica'], arquivo)
-        
-        elif nome_lower.endswith('.md'):
-            destino = os.path.join('research', 'pocs', arquivo)
-
-        elif nome_lower.endswith(('.png', '.jpg', '.jpeg', '.gif', '.svg')):
-            destino = os.path.join('img', arquivo)
-
-        if destino:
-            if os.path.exists(destino):
-                print(f"    ⚠️ Ignorado: {arquivo} já existe em {os.path.dirname(destino)}")
-            else:
-                os.makedirs(os.path.dirname(destino), exist_ok=True)
-                shutil.move(arquivo, destino)
-                print(f"    ✔️ Movido: {arquivo} -> {destino}")
-
-
-def gerar_readme():
-    """Gera README dinâmico com métricas reais e badges seguras."""
-    print("📝 Atualizando Dashboard do Portfólio...")
-
+    # 4. Gerar o README Estilizado (conforme as imagens)
+    print("📝 Construindo README.md...")
     total_regras = 0
+    tabela_regras = ""
     regras_por_tatica = {t: 0 for t in MITRE_TACTICS}
-    tabela_corpo = ""
 
-    # Percorre a árvore organizada para coletar dados reais
+    # Varrer a pasta Sigma para a tabela
     for tatica in MITRE_TACTICS:
-        pasta_t = os.path.join('sigma', tatica)
+        pasta_t = os.path.join(atual_sigma, tatica)
         if os.path.exists(pasta_t):
-            arquivos = [f for f in os.listdir(pasta_t) if f.endswith(('.yml', '.yaml'))]
-            for arquivo in sorted(arquivos):
+            arquivos = [f for f in os.listdir(pasta_t) if f.lower().endswith(('.yml', '.yaml'))]
+            for arq in sorted(arquivos):
                 total_regras += 1
                 regras_por_tatica[tatica] += 1
+                info = extrair_metadados_sigma(os.path.join(pasta_t, arq))
                 
-                info = extrair_metadados_sigma(os.path.join(pasta_t, arquivo))
+                # Ícone de Nível
                 cor = '🔴' if info['level'] in ['high', 'critical'] else '🟡' if info['level'] == 'medium' else '🔵'
-                label_tatica = tatica.replace('_', ' ').title()
-                link = f"sigma/{tatica}/{arquivo}"
-                tabela_corpo += f"| {cor} | {label_tatica} | [{arquivo}]({link}) | ✅ |\n"
+                
+                # Link formatado para o GitHub
+                link_arq = f"{sigma_folder_name}/{tatica}/{arq}"
+                
+                tabela_regras += f"| {cor} | {tatica.replace('_', ' ').title()} | `{arq}` | ✅ | [Analisar Regra]({link_arq}) |\n"
 
-    taticas_cobertas = sum(1 for count in regras_por_tatica.values() if count > 0)
-    progresso = int((taticas_cobertas / 14) * 100)
-    data_atual = datetime.now().strftime("%d/%m/%Y %H:%M")
-    
-    # Badge URL encoding
-    data_encoded = quote(data_atual)
+    taticas_ativas = sum(1 for c in regras_por_tatica.values() if c > 0)
+    progresso = int((taticas_ativas / 14) * 100)
+    data_att = datetime.now().strftime("%d/%m/%Y %H:%M")
 
-    readme_content = f"""# 🛡️ Detection Engineering Portfolio <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJndmR4N3R4N3R4N3R4N3R4N3R4N3R4N3R4N3R4N3R4JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/qgQUggAC3Pfv687qPC/giphy.gif" width="40">
+    readme_content = f"""# 🛡️ Detection Engineering Portfolio
 
-> Repositório profissional para detecção de ameaças e emulação de adversários.
+| Portfólio focado na criação de detecções e mapeamento ao framework MITRE ATT&CK®. |
+| :--- |
 
-![MITRE Coverage](https://geps.dev/progress/{progresso}?dangerColor=ff4b2b&warningColor=f9d423&successColor=00ff87)
-![Sigma Rules](https://img.shields.io/badge/Sigma_Rules-{total_regras}-orange?style=for-the-badge)
-![Last Update](https://img.shields.io/badge/Updated-{data_encoded}-blue?style=for-the-badge)
+![{progresso}%](https://img.shields.io/badge/PROGRESSO-{progresso}%25-orange)
+![Regras Sigma](https://img.shields.io/badge/Regras_Sigma-{total_regras}-orange)
+![Atualizado](https://img.shields.io/badge/Atualizado-{quote(data_att)}-green?color=97ca00)
 
-## 📊 Cobertura MITRE ATT&CK®
-| Tática | Quantidade |
+## 📊 Cobertura por Tática
+| Tática | Qtd Regras |
 | :--- | :---: |
 """
     for t in MITRE_TACTICS:
-        readme_content += f"| {t.replace('_', ' ').title()} | {regras_por_tatica[t]} |\n"
+        if regras_por_tatica[t] > 0:
+            readme_content += f"| {t.replace('_', ' ').title()} | {regras_por_tatica[t]} |\n"
 
     readme_content += f"""
-## 📋 Catálogo de Detecções Ativas
-| Nível | Tática | Regra (Artefato) | Status |
-| :---: | :--- | :--- | :---: |
-{tabela_corpo if tabela_corpo else '| - | - | Nenhuma regra catalogada | - |'}
+## 📜 Acervo de Regras (Sigma Rules)
+| Nível | Tática | Regra (Artefato) | Validação | Link |
+| :---: | :--- | :--- | :---: | :--- |
+{tabela_regras if tabela_regras else '| - | - | Nenhuma regra encontrada | - | - |'}
 
 ---
-*Script de automação v2.1 (Senior Edition) - Mantido por {NOME_USUARIO}*
+*README atualizado automaticamente via script de automação.*
 """
     with open("README.md", "w", encoding="utf-8") as f:
         f.write(readme_content)
-
+    print(f"✨ Sucesso! {total_regras} regras catalogadas.")
 
 if __name__ == "__main__":
-    print("=" * 50)
-    print("🚀 DETECTION PORTFOLIO ORGANIZER PRO")
-    print("=" * 50)
-    criar_estrutura_pastas()
-    mover_arquivos_soltos()
-    gerar_readme()
-    print("=" * 50)
-    print(f"✨ Concluído! {len(METADATA_CACHE)} arquivos processados.")
+    organizar_e_gerar()
