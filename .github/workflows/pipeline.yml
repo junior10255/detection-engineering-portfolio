@@ -1,36 +1,29 @@
-# Caminho sugerido: .github/workflows/pipeline.yml
 name: Detection Portfolio Pipeline
 
 on:
   push:
-    branches: [ main ]
     paths:
-      - '**.yml'
-      - '**.yaml'
-      - '**.md'
+      - 'Sigma/**/*.yml'
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Python
+      - name: Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: 3.11
 
-      - name: Install Dependencies
+      - name: Install deps
         run: |
           pip install pyyaml sigma-cli
 
-      - name: Run Organizer
+      - name: Run organizer
         run: python organize.py
 
-      - name: Commit and Push
+      - name: Commit changes
         run: |
-          git config --global user.name "DetectionBot"
-          git config --global user.email "bot@github.com"
+          git config user.name "bot"
+          git config user.email "bot@github.com"
           git add .
-          git commit -m "Auto-update: Dashboard & Metrics [skip ci]" || exit 0
+          git commit -m "auto update" || exit 0
           git push

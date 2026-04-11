@@ -1,9 +1,9 @@
 # 🛡️ Detection Engineering Portfolio
 > Repositório automatizado de detecções Sigma e cobertura MITRE ATT&CK.
 
-![Progress](https://img.shields.io/badge/PROGRESS-14%25-blue)
-![Sigma](https://img.shields.io/badge/Sigma-2-orange)
-![Updated](https://img.shields.io/badge/Updated-11/04/2026_17:30-green)
+![Progress](https://img.shields.io/badge/PROGRESS-14%25-orange)
+![Rules](https://img.shields.io/badge/Sigma-2-blue)
+![Updated](https://img.shields.io/badge/Updated-11/04/2026%2017%3A57-green)
 
 ## 📊 Cobertura por Tática
 | Tática | Quantidade |
