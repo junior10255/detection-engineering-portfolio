@@ -1,11 +1,6 @@
 {
     "total_rules": 2,
-    "valid_rules": 2,
-    "coverage_percentage": 14,
     "tactics_covered": 2,
-    "rules_by_tactic": {
-        "Impact": 1,
-        "Execution": 1
-    },
-    "last_update": "11/04/2026 15:51"
+    "coverage_pct": 14,
+    "updated_at": "11/04/2026 16:09"
 }
