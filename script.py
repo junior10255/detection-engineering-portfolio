@@ -1,27 +1,26 @@
 #!/usr/bin/env python3
 """
-Detection Engineering Portfolio Organizer - Ultimate v7.0
-=========================================================
-✔ Corrige erro __file__ (ambiente interativo)
-✔ Cria TODAS as pastas auxiliares automaticamente
+Detection Engineering Portfolio - Xtreme v10.1 (Enterprise Hardened)
+===================================================================
+✔ Fix cálculo de qualidade média
+✔ Proteção total contra crash (pastas / encoding)
 ✔ .gitkeep em toda estrutura
 ✔ Proteção contra sobrescrita
-✔ Contador de regras inválidas
-✔ Cache de leitura YAML (performance)
-✔ Melhor identificação MITRE (nome + ID + heurística)
-✔ Log final completo (regras + inválidas + cache)
-
-Requer: pip install pyyaml
+✔ Auditoria robusta
+✔ Pronto para CI/CD
 """
 
 import os
 import shutil
 import yaml
+import json
 from datetime import datetime
-from pathlib import Path
 from urllib.parse import quote
+from pathlib import Path
 
-# --- CONFIG ---
+# =========================
+# CONFIG
+# =========================
 MITRE_TACTICS = [
     'reconnaissance', 'resource_development', 'initial_access', 'execution',
     'persistence', 'privilege_escalation', 'defense_evasion', 'credential_access',
@@ -29,12 +28,26 @@ MITRE_TACTICS = [
     'exfiltration', 'impact'
 ]
 
-EXTRA_FOLDERS = ['research/pocs', 'img', 'tools']
+EXTRA_FOLDERS = ['research/pocs', 'img', 'tools', 'audit']
 
-# Cache global
+ID_TO_TACTIC = {
+    't1595': 'reconnaissance', 't1566': 'initial_access',
+    't1059': 'execution', 't1047': 'execution',
+    't1053': 'persistence', 't1547': 'persistence',
+    't1021': 'lateral_movement', 't1003': 'credential_access',
+    't1027': 'defense_evasion', 't1070': 'defense_evasion',
+    't1087': 'discovery', 't1082': 'discovery',
+    't1485': 'impact', 't1071': 'command_and_control'
+}
+
 CACHE = {}
-INVALID_RULES = 0
-
+GLOBAL_STATS = {
+    "invalid": 0,
+    "severity": {"critical": 0, "high": 0, "medium": 0, "low": 0},
+    "logsources": {},
+    "authors": {},
+    "audit_log": []
+}
 
 # =========================
 # UTIL
@@ -42,91 +55,96 @@ INVALID_RULES = 0
 def get_script_name():
     try:
         return os.path.basename(__file__)
-    except NameError:
-        return "interactive_script"
+    except:
+        return "script.py"
 
 
-def log(msg, verbose=True):
-    if verbose:
-        print(msg)
+def log_audit(msg):
+    GLOBAL_STATS["audit_log"].append(f"[{datetime.now().isoformat()}] {msg}")
 
 
 # =========================
-# EXTRAÇÃO DE METADADOS
+# SCORE
 # =========================
-def extrair_metadados(path, verbose=False):
-    global INVALID_RULES
+def calcular_score(data):
+    score = 0
+    weights = {
+        'description': 20,
+        'author': 10,
+        'falsepositives': 20,
+        'references': 10,
+        'date': 10,
+        'tags': 30
+    }
+    for field, points in weights.items():
+        if data.get(field):
+            score += points
+    return score
 
+
+# =========================
+# METADATA
+# =========================
+def extrair_metadados(path):
     if path in CACHE:
         return CACHE[path]
 
-    meta = {'tatica': 'execution', 'level': 'low'}
+    meta = {
+        'tatica': 'execution',
+        'level': 'low',
+        'valid': True,
+        'score': 0,
+        'author': 'Unknown',
+        'logsource': 'Unknown'
+    }
 
     try:
         with open(path, 'r', encoding='utf-8', errors='ignore') as f:
             data = yaml.safe_load(f)
 
         if not data or not isinstance(data, dict):
+            meta['valid'] = False
             CACHE[path] = meta
             return meta
 
-        # level
         meta['level'] = str(data.get('level', 'low')).lower()
+        meta['author'] = data.get('author', 'Unknown')
+        meta['score'] = calcular_score(data)
 
-        # validação mínima
-        if 'title' not in data or 'logsource' not in data:
-            INVALID_RULES += 1
-            log(f"⚠️ Regra incompleta: {path}", verbose)
+        # Logsource
+        ls = data.get('logsource', {})
+        ls_str = f"{ls.get('product','any')}/{ls.get('service','any')}"
+        meta['logsource'] = ls_str
 
+        # Stats
+        GLOBAL_STATS['severity'][meta['level']] = GLOBAL_STATS['severity'].get(meta['level'], 0) + 1
+        GLOBAL_STATS['logsources'][ls_str] = GLOBAL_STATS['logsources'].get(ls_str, 0) + 1
+        GLOBAL_STATS['authors'][meta['author']] = GLOBAL_STATS['authors'].get(meta['author'], 0) + 1
+
+        # Validação
+        if not all(k in data for k in ['title', 'logsource', 'detection']):
+            meta['valid'] = False
+            GLOBAL_STATS['invalid'] += 1
+
+        # MITRE
         tags = data.get('tags', [])
-        if not isinstance(tags, list):
-            tags = [tags]
-
-        # 1. Nome da tática (prioridade)
-        for tag in tags:
-            tag = str(tag).lower()
-            if tag.startswith('attack.') and not tag.startswith('attack.t'):
-                nome = tag.split('.')[1].replace('-', '_')
-                if nome in MITRE_TACTICS:
-                    meta['tatica'] = nome
-                    CACHE[path] = meta
-                    return meta
-
-        # 2. Técnica ID (tXXXX)
-        for tag in tags:
-            tag = str(tag).lower()
-            if tag.startswith('attack.t'):
-                tid = tag.split('.')[1].split('.')[0]
-
-                ID_MAP = {
-                    't1059': 'execution',
-                    't1047': 'execution',
-                    't1053': 'persistence',
-                    't1547': 'persistence',
-                    't1021': 'lateral_movement',
-                    't1003': 'credential_access',
-                    't1562': 'defense_evasion',
-                    't1486': 'impact'
-                }
-
-                if tid in ID_MAP:
-                    meta['tatica'] = ID_MAP[tid]
-                    CACHE[path] = meta
-                    return meta
-
-                # 3. Heurística fallback
-                if tid.startswith('t1'):
-                    meta['tatica'] = 'initial_access'
-                elif tid.startswith('t2'):
-                    meta['tatica'] = 'execution'
-                elif tid.startswith('t3'):
-                    meta['tatica'] = 'persistence'
-
-                CACHE[path] = meta
-                return meta
+        if isinstance(tags, list):
+            for tag in [str(t).lower() for t in tags]:
+                if tag.startswith('attack.') and not tag.startswith('attack.t'):
+                    nome = tag.split('.')[1].replace('-', '_')
+                    if nome in MITRE_TACTICS:
+                        meta['tatica'] = nome
+                        break
+                elif tag.startswith('attack.t'):
+                    tid = tag.split('.')[1].split('.')[0]
+                    if tid in ID_TO_TACTIC:
+                        meta['tatica'] = ID_TO_TACTIC[tid]
+                        break
 
     except Exception as e:
-        log(f"⚠️ Erro ao ler {path}: {e}", verbose)
+        log_audit(f"Erro em {path}: {e}")
+        meta['valid'] = False
+        GLOBAL_STATS['invalid'] += 1
 
     CACHE[path] = meta
     return meta
@@ -135,17 +153,14 @@ def extrair_metadados(path, verbose=False):
 # =========================
 # ESTRUTURA
 # =========================
-def criar_pastas(base):
-    # Sigma
+def preparar_estrutura(base):
     for t in MITRE_TACTICS:
         os.makedirs(os.path.join(base, 'Sigma', t), exist_ok=True)
 
-    # Extras
     for p in EXTRA_FOLDERS:
         os.makedirs(os.path.join(base, p), exist_ok=True)
 
-
-def criar_gitkeep(base):
+    # .gitkeep global
     for root, dirs, files in os.walk(base):
         if '.git' in root:
             continue
@@ -156,46 +171,51 @@ def criar_gitkeep(base):
 # =========================
 # ORGANIZAÇÃO
 # =========================
-def organizar(base, verbose=False):
-    script_name = get_script_name()
+def organizar(base):
+    script = get_script_name()
 
-    for item in os.listdir(base):
-        full_path = os.path.join(base, item)
-
-        if not os.path.isfile(full_path):
+    for f in os.listdir(base):
+        if f in ['README.md', 'metrics.json', script, 'index.html']:
             continue
 
-        if item in ['README.md', script_name]:
+        full = os.path.join(base, f)
+
+        if not os.path.isfile(full):
             continue
 
         destino = None
-        lower = item.lower()
 
-        if lower.endswith(('.yml', '.yaml')):
-            meta = extrair_metadados(full_path, verbose)
-            destino = os.path.join(base, 'Sigma', meta['tatica'], item)
+        if f.endswith(('.yml', '.yaml')):
+            meta = extrair_metadados(full)
+            destino = os.path.join(base, 'Sigma', meta['tatica'], f)
 
-        elif lower.endswith('.md'):
-            destino = os.path.join(base, 'research/pocs', item)
+        elif f.endswith('.md'):
+            destino = os.path.join(base, 'research/pocs', f)
 
-        elif lower.endswith(('.png', '.jpg', '.jpeg', '.gif', '.svg')):
-            destino = os.path.join(base, 'img', item)
+        elif f.endswith(('.png', '.jpg', '.jpeg', '.svg')):
+            destino = os.path.join(base, 'img', f)
 
         if destino:
             if os.path.exists(destino):
-                log(f"⚠️ Ignorado (já existe): {item}", verbose)
+                log_audit(f"IGNORADO (existe): {f}")
             else:
-                shutil.move(full_path, destino)
-                log(f"✔️ {item} -> {destino}", verbose)
+                shutil.move(full, destino)
+                log_audit(f"MOVIDO: {f} -> {destino}")
 
 
 # =========================
-# README
+# DASHBOARD
 # =========================
-def gerar_readme(base):
+def gerar_docs(base):
     total = 0
+    scores = []
     tabela = ""
-    contagem = {t: 0 for t in MITRE_TACTICS}
+    counts = {t: 0 for t in MITRE_TACTICS}
+
+    poc_dir = os.path.join(base, 'research/pocs')
+    pocs = []
+    if os.path.exists(poc_dir):
+        pocs = [os.path.splitext(f)[0] for f in os.listdir(poc_dir) if f.endswith('.md')]
 
     for t in MITRE_TACTICS:
         pasta = os.path.join(base, 'Sigma', t)
@@ -206,74 +226,89 @@ def gerar_readme(base):
         for f in sorted(os.listdir(pasta)):
             if f.endswith(('.yml', '.yaml')):
                 total += 1
-                contagem[t] += 1
+                counts[t] += 1
 
                 info = extrair_metadados(os.path.join(pasta, f))
+                scores.append(info['score'])
 
-                cor = (
-                    '🔴' if info['level'] in ['high', 'critical']
-                    else '🟡' if info['level'] == 'medium'
-                    else '🔵'
-                )
+                cor = '🔴' if info['level'] in ['high', 'critical'] else '🟡' if info['level'] == 'medium' else '🔵'
 
                 link = f"Sigma/{t}/{f}"
 
-                tabela += f"| {cor} | {t.replace('_',' ').title()} | `{f}` | ✅ | [Abrir]({link}) |\n"
+                poc_link = "---"
+                for p in pocs:
+                    if p in f or os.path.splitext(f)[0] in p:
+                        poc_link = f"[🔍 POC](research/pocs/{p}.md)"
+                        break
 
-    progresso = int((sum(1 for v in contagem.values() if v > 0) / 14) * 100)
+                tabela += f"| {cor} | {t.title()} | `{f}` | {info['score']}% | {poc_link} | [Regra]({link}) |\n"
+
+    avg_score = round(sum(scores) / len(scores), 2) if scores else 0
+
+    # JSON
+    metrics = {
+        "summary": {
+            "total": total,
+            "invalid": GLOBAL_STATS['invalid'],
+            "avg_quality": avg_score
+        },
+        "severity": GLOBAL_STATS['severity'],
+        "tactics": counts,
+        "sources": GLOBAL_STATS['logsources'],
+        "authors": GLOBAL_STATS['authors'],
+        "updated_at": datetime.now().isoformat()
+    }
+
+    with open(os.path.join(base, "metrics.json"), "w", encoding="utf-8") as f:
+        json.dump(metrics, f, indent=4)
+
+    # README
+    gaps = [t.title() for t, c in counts.items() if c == 0]
     data = quote(datetime.now().strftime("%d/%m/%Y %H:%M"))
 
-    readme = f"""# 🛡️ Detection Engineering Portfolio
+    readme = f"""# 🛡️ Detection Engineering Portfolio v10
 
-![Progress](https://img.shields.io/badge/PROGRESS-{progresso}%25-orange)
-![Rules](https://img.shields.io/badge/Sigma-{total}-blue)
-![Updated](https://img.shields.io/badge/Updated-{data}-green)
+![Quality](https://img.shields.io/badge/Quality-{avg_score}%25-brightgreen)
+![Rules](https://img.shields.io/badge/Rules-{total}-blue)
+![Updated](https://img.shields.io/badge/Updated-{data}-orange)
 
-## 📊 Cobertura MITRE
-| Tática | Qtd |
-| :--- | :---: |
-"""
+## 🎯 Gap Analysis
+{", ".join(gaps) if gaps else "Cobertura completa 🚀"}
 
-    for t in MITRE_TACTICS:
-        if contagem[t] > 0:
-            readme += f"| {t.replace('_',' ').title()} | {contagem[t]} |\n"
-
-    readme += f"""
-## 📜 Regras
-| Nível | Tática | Nome | Status | Link |
-| :---: | :--- | :--- | :---: | :--- |
-{tabela if tabela else '| - | - | Nenhuma regra | - | - |'}
+## 📜 Rules
+| Level | Tática | Nome | Score | POC | Link |
+| :---: | :--- | :--- | :---: | :---: | :--- |
+{tabela if tabela else '| - | - | vazio | - | - | - |'}
 
 ---
-*Auto-generated*
+*Generated by Xtreme Organizer v10.1*
 """
 
     with open(os.path.join(base, "README.md"), "w", encoding="utf-8") as f:
         f.write(readme)
 
-    return total
+    with open(os.path.join(base, "audit/process.log"), "w", encoding="utf-8") as f:
+        f.write("\n".join(GLOBAL_STATS["audit_log"]))
+
+    return total, avg_score
 
 
 # =========================
 # MAIN
 # =========================
-def main(verbose=True):
-    base = os.path.abspath('.')
+if __name__ == "__main__":
+    base = os.getcwd()
 
-    print("🚀 Organizer v7 iniciado\n")
+    print("🚀 Xtreme Organizer v10.1\n")
 
-    criar_pastas(base)
-    organizar(base, verbose)
-    criar_gitkeep(base)
-    total = gerar_readme(base)
+    preparar_estrutura(base)
+    organizar(base)
+    total, avg = gerar_docs(base)
 
     print("\n" + "="*50)
     print(f"✅ Finalizado")
-    print(f"📊 {total} regras Sigma")
-    print(f"⚠️ {INVALID_RULES} regras com problemas")
-    print(f"⚡ {len(CACHE)} arquivos analisados")
+    print(f"📊 Regras: {total}")
+    print(f"⭐ Qualidade média: {avg}%")
+    print(f"⚠️ Inválidas: {GLOBAL_STATS['invalid']}")
+    print(f"⚡ Analisadas: {len(CACHE)}")
     print("="*50)
-
-
-if __name__ == "__main__":
-    main()
