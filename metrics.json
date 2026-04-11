@@ -1,0 +1,46 @@
+{
+    "details": {
+        "severity": {
+            "critical": 0,
+            "high": 1,
+            "low": 0,
+            "medium": 1
+        },
+        "tactics": {
+            "collection": 0,
+            "command_and_control": 0,
+            "credential_access": 0,
+            "defense_evasion": 0,
+            "discovery": 0,
+            "execution": 0,
+            "exfiltration": 0,
+            "impact": 1,
+            "initial_access": 0,
+            "lateral_movement": 0,
+            "persistence": 1,
+            "privilege_escalation": 0,
+            "reconnaissance": 0,
+            "resource_development": 0
+        }
+    },
+    "insights": {
+        "top_authors": [
+            [
+                "Luiz Junior",
+                2
+            ]
+        ],
+        "top_logsources": [
+            [
+                "windows/any",
+                2
+            ]
+        ]
+    },
+    "summary": {
+        "coverage": 14.29,
+        "quality": 100.0,
+        "total": 2
+    },
+    "updated_at": "2026-04-11T18:40:48.881633"
+}
