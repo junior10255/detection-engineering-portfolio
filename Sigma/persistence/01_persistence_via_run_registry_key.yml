@@ -1,0 +1,33 @@
+title: Persistence via Run Registry Key
+id: 5f9a2d31-4b1e-4c8d-9011-223344556677
+status: test
+description:
+  Detecta a criação ou modificação de valores nas chaves de registro Run, utilizadas para estabelecer persistência no sistema.
+  A regra ignora o processo svchost.exe para reduzir falsos positivos, focando em atividades manuais ou scripts como reg.exe
+  conforme demonstrado nos testes do Atomic Red Team (T1547.001).
+references:
+    - https://github.com/redcanaryco/atomic-red-team/blob/master/atomics/T1547.001/T1547.001.md
+    - https://attack.mitre.org/techniques/T1547/001/
+author: Luiz Junior
+date: 2026-02-18
+modified: 2026-02-18
+tags:
+    - attack.persistence
+    - attack.t1547.001
+logsource:
+    category: registry_event
+    product: windows
+detection:
+    selection:
+        event_id: 13
+        TargetObject|contains:
+            - '\Software\Microsoft\Windows\CurrentVersion\Run\'
+            - '\Software\Microsoft\Windows\CurrentVersion\RunOnce\'
+            - '\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer\Run\'
+    filter_svchost:
+        Image: 'C:\Windows\System32\svchost.exe'
+    condition: selection and not filter_svchost
+falsepositives:
+    - Instaladores de software legítimos que não utilizam svchost.
+    - Scripts de logon administrativos para mapeamento de drives ou impressoras.
+level: medium
