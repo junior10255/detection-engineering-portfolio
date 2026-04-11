@@ -1,88 +1,33 @@
-# 🛡️ Portfólio de Detection Engineering
+# 🛡️ Detection Engineering Portfolio <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJndmR4N3R4N3R4N3R4N3R4N3R4N3R4N3R4N3R4N3R4JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/qgQUggAC3Pfv687qPC/giphy.gif" width="40">
 
-Repositório dedicado ao desenvolvimento de regras de detecção, casos de threat hunting e pesquisas em segurança focadas na identificação de comportamentos maliciosos em ambientes corporativos.
+> 🎯 Repositório corporativo focado na pesquisa e engenharia de regras de detecção orientadas ao framework MITRE ATT&CK®.
 
-Todas as detecções são mapeadas ao framework MITRE ATT&CK® e projetadas para apoiar operações de SOC, Resposta a Incidentes e Threat Hunting.
-
----
-
-## 🎯 Objetivos
-
-* Desenvolver regras de detecção de alta fidelidade
-* Reduzir falsos positivos através de tuning
-* Mapear detecções para técnicas reais de ataque
-* Aumentar a visibilidade do Blue Team
-* Apoiar atividades de threat hunting
+![Cobertura MITRE](https://geps.dev/progress/14?dangerColor=ff4b2b&warningColor=f9d423&successColor=00ff87)
+![MITRE ATT&CK](https://img.shields.io/badge/MITRE_ATT%26CK-Mapeado-blue?style=for-the-badge&logo=mitre-attack)
+![Regras Sigma](https://img.shields.io/badge/Regras_Sigma-2-orange?style=for-the-badge&logo=semanticweb)
+![Última Atualização](https://img.shields.io/badge/Última_Atualização-11/04/2026_15:51-green?style=for-the-badge)
 
 ---
 
-📂 Estrutura do Repositório
+## 📊 Métricas de Cobertura
 
-```id="f0r2k9"
-sigma/
- ├── reconnaissance/
- ├── resource_development/
- ├── initial_access/
- ├── execution/
- ├── persistence/
- ├── privilege_escalation/
- ├── defense_evasion/
- ├── credential_access/
- ├── discovery/
- ├── lateral_movement/
- ├── collection/
- ├── command_and_control/
- ├── exfiltration/
- └── impact/
+### Densidade por Tática (MITRE ATT&CK®)
+| Tática | Quantidade de Regras |
+| :--- | :---: |
+| Execution | 1 |
+| Impact | 1 |
+
 
 ---
 
-🛠️ Fontes de Dados
+## 📋 Acervo de Detecções (Sigma Rules)
 
-* Logs de Segurança do Windows
-* Sysmon
-* Microsoft Defender for Endpoint
-* Elastic Stack (ELK)
+| Sev | Tática | Regra (Artefato) | Validação | Referência |
+| :---: | :--- | :--- | :---: | :---: |
+| 🔴 | Impact | `01_manipulating_shadow_copies_via_WMIC.yml` | ✅ | [Analisar Regra](sigma/impact/LOLBAS/WMIC/01_manipulating_shadow_copies_via_WMIC.yml) |
+| 🔴 | Execution | `01_proc_creation_win_wmic_lateral_movement_ip.yml` | ✅ | [Analisar Regra](sigma/lateral_movement/LOLBAS/WMIC/01_proc_creation_win_wmic_lateral_movement_ip.yml) |
 
----
-
-📜 Padrão das Regras
-
-Cada regra segue os seguintes critérios:
-
-* Formato Sigma
-* Mapeamento MITRE ATT&CK
-* Análise de falso positivo
-* Classificação de severidade
-* Validação em laboratório
 
 ---
-
-🧪 Validação em Laboratório
-
-As detecções são testadas utilizando:
-
-* Atomic Red Team
-* Simulação manual de ataques
-* Técnicas com PowerShell
-* Cenários de persistência e pós-exploração
-
----
-
-👨‍💻 Autor
-
-**Luiz Junior**
-Detection Engineer | Blue Team | Threat Hunting
-
-Foco: Detection Engineering & Threat Hunting
-Especialização: Sigma • SIEM • MITRE ATT&CK
-
----
-
-📌 Aviso
-
-Este repositório é destinado exclusivamente para fins educacionais e defesa em segurança da informação.
-
----
-
-⭐ Se este projeto for útil para você, considere dar uma estrela.
+### 🏗️ Arquitetura e Organização
+Este repositório é gerenciado através de automação Python para garantir conformidade contínua de nomenclatura, categorização de Táticas e validação de schema YAML.
