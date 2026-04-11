@@ -1,0 +1,33 @@
+name: Detection Portfolio Pipeline
+
+on:
+  push:
+    paths:
+      - 'Sigma/**/*.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+
+      - name: Install deps
+        run: |
+          pip install pyyaml sigma-cli
+
+      - name: Run organizer
+        run: python organize.py
+
+      - name: Commit changes
+        run: |
+          git config user.name "bot"
+          git config user.email "bot@github.com"
+          git add .
+          git commit -m "auto update" || exit 0
+          git push
