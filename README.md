@@ -37,4 +37,4 @@
 | 🟡 | Persistence | `01_persistence_via_run_registry_key.yml` | 100.0% | [📄 Ver](Sigma/persistence/01_persistence_via_run_registry_key.yml) |
 
 ---
-*Gerado via script.py v16.1 em 2026-04-13 19:46:14*
+*Gerado via script.py v16.1 em 2026-04-13 19:59:14*
