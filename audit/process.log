@@ -22,3 +22,30 @@
 [INFO] 2026-04-13 19:59:14 Arquivos soltos: 0 YAML | 0 imagens | 0 markdown
 [INFO] 2026-04-13 19:59:14 Finalizado | Regras: 3 | Cobertura: 21.43% | Qualidade: 100.0% | High Impact: 66.67%
 [INFO] 2026-04-13 19:59:14 Gerados em C:\Users\Junior\Documents\GitHub\detection-engineering-portfolio: README.md | dashboard.html | metrics.json | metrics.prom
+[INFO] 2026-04-13 20:07:31 === Xtreme Organizer v16.1 | Modo: CI/CD ===
+[INFO] 2026-04-13 20:07:31 Config carregada: C:\Users\Junior\Documents\GitHub\detection-engineering-portfolio\config.yaml
+[INFO] 2026-04-13 20:07:31 ── Repositório: C:\Users\Junior\Documents\GitHub\detection-engineering-portfolio
+[INFO] 2026-04-13 20:07:31 Regras já organizadas em Sigma/: 3
+[INFO] 2026-04-13 20:07:31 Arquivos soltos: 0 YAML | 0 imagens | 0 markdown
+[ERROR] 2026-04-13 20:07:31 CI FALHOU: cobertura 21.4% abaixo do mínimo 50.0%
+[INFO] 2026-04-13 20:09:16 === Xtreme Organizer v16.1 | Modo: CI/CD ===
+[INFO] 2026-04-13 20:09:16 Config carregada: C:\Users\Junior\Documents\GitHub\detection-engineering-portfolio\config.yaml
+[INFO] 2026-04-13 20:09:16 ── Repositório: C:\Users\Junior\Documents\GitHub\detection-engineering-portfolio
+[INFO] 2026-04-13 20:09:16 Regras já organizadas em Sigma/: 3
+[INFO] 2026-04-13 20:09:16 Arquivos soltos: 0 YAML | 0 imagens | 0 markdown
+[ERROR] 2026-04-13 20:09:16 CI FALHOU: cobertura 21.4% abaixo do mínimo 50.0%
+[INFO] 2026-04-13 20:33:10 === Xtreme Organizer v18.0 | Modo: CI/CD ===
+[INFO] 2026-04-13 20:33:10 Config carregada: C:\Users\Junior\Documents\GitHub\detection-engineering-portfolio\config.yaml
+[INFO] 2026-04-13 20:33:10 ── Repositório: C:\Users\Junior\Documents\GitHub\detection-engineering-portfolio
+[INFO] 2026-04-13 20:33:10 Regras já organizadas: 0
+[INFO] 2026-04-13 20:33:10 Arquivos soltos: 0 YAML | 0 imagens | 0 markdown
+[ERROR] 2026-04-13 20:33:10 CI FALHOU: cobertura 0.0% < 50.0%
+[ERROR] 2026-04-13 20:33:10 CI FALHOU: qualidade média 0.0% < 70.0%
+[INFO] 2026-04-13 20:33:17 === Xtreme Organizer v18.0 | Modo: Normal ===
+[INFO] 2026-04-13 20:33:17 Config carregada: C:\Users\Junior\Documents\GitHub\detection-engineering-portfolio\config.yaml
+[INFO] 2026-04-13 20:33:17 ── Repositório: C:\Users\Junior\Documents\GitHub\detection-engineering-portfolio
+[INFO] 2026-04-13 20:33:17 Hash cache carregado: 0 entradas
+[INFO] 2026-04-13 20:33:17 Regras já organizadas: 0
+[INFO] 2026-04-13 20:33:17 Arquivos soltos: 0 YAML | 0 imagens | 0 markdown
+[INFO] 2026-04-13 20:33:17 Finalizado | Regras: 0 | Cobertura: 0.0% | Qualidade: 0.0% | High Impact: 0.0%
+[INFO] 2026-04-13 20:33:17 Gerados: README.md | metrics.json | metrics.prom | hash_cache.json
