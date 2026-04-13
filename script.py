@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 """
-Detection Engineering Portfolio - Xtreme v18.0 (Enterprise Hardened)
-====================================================================
-- Correção de bug crítico de movimentação de duplicatas
-- Thread-safety total em todas as estruturas compartilhadas
-- Hash cache em disco (evita recalcular)
-- Controle de concorrência para sigma-cli
-- Compatibilidade Python 3.8+
+Detection Engineering Portfolio - Xtreme v18.1 (Custom Rule Folder Names)
+==========================================================================
+- Nome da subpasta da regra baseado no campo 'title' (sanitizado)
+- Migração automática de regras soltas em Sigma/<tatica>/
+- Fallback para nome do arquivo se título ausente/inválido
+- Hash cache, thread-safety, sigma-cli com semáforo
 """
 
 from __future__ import annotations
@@ -21,7 +20,7 @@ import shutil
 import subprocess
 import tempfile
 import threading
-import time
+import unicodedata
 import yaml
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
@@ -29,7 +28,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional, Set, Tuple, Dict
 
-SCRIPT_VERSION = "18.0"
+SCRIPT_VERSION = "18.1"
 SCRIPT_NAME = Path(__file__).name
 
 # =============================================================================
@@ -198,6 +197,44 @@ def is_relative_to(path: Path, parent: Path) -> bool:
         return False
 
 # =============================================================================
+# Sanitização de título para nome de pasta
+# =============================================================================
+
+def sanitize_folder_name(title: str) -> str:
+    """
+    Converte um título em um nome de pasta válido:
+    - Minúsculas
+    - Substitui espaços e caracteres especiais por underscore
+    - Remove acentos
+    - Apenas letras, números e underscores
+    - Limita a 64 caracteres
+    """
+    if not title:
+        return ""
+    # Remove acentos
+    title = unicodedata.normalize('NFKD', title).encode('ASCII', 'ignore').decode('ASCII')
+    # Substitui caracteres não alfanuméricos por underscore
+    title = re.sub(r'[^a-zA-Z0-9]+', '_', title)
+    # Remove underscores duplicados e laterais
+    title = re.sub(r'_+', '_', title).strip('_')
+    # Minúsculas
+    title = title.lower()
+    # Limita tamanho
+    if len(title) > 64:
+        title = title[:64].rstrip('_')
+    return title
+
+def extract_folder_name_from_data(data: dict, fallback: str) -> str:
+    """Extrai nome da pasta a partir do campo 'title' da regra."""
+    title = data.get("title", "")
+    if isinstance(title, str):
+        folder = sanitize_folder_name(title)
+        if folder:
+            return folder
+    # Fallback: usa o nome do arquivo sem extensão
+    return fallback
+
+# =============================================================================
 # Hash Cache (persistente em disco)
 # =============================================================================
 
@@ -254,7 +291,6 @@ def compute_content_hash(path: Path, cache: Optional[HashCache] = None) -> str:
 # =============================================================================
 
 def _apply_heuristic(data: dict, cfg: dict) -> str:
-    # Usa apenas campos relevantes para reduzir falsos positivos
     relevant = ["title", "description", "detection"]
     content_str = " ".join(str(data.get(f, "")) for f in relevant).lower()
     weights: dict = cfg["heuristic_weights"]
@@ -286,10 +322,8 @@ def parse_sigma(
         stats.increment_invalid()
         return None, "too_large"
 
-    # Hash (com cache)
     file_hash = compute_content_hash(path, hash_cache)
 
-    # Deduplicação (thread-safe)
     with hash_lock:
         if file_hash in seen_hashes:
             logger.debug("Regra duplicada: %s", path.name)
@@ -297,7 +331,6 @@ def parse_sigma(
             return None, "duplicate"
         seen_hashes.add(file_hash)
 
-    # Leitura do arquivo
     try:
         with open(path, "r", encoding="utf-8", errors="ignore") as f:
             raw = f.read()
@@ -306,7 +339,6 @@ def parse_sigma(
         stats.increment_invalid()
         return None, "io_error"
 
-    # Parsing YAML
     try:
         data = yaml.safe_load(raw)
     except yaml.YAMLError as exc:
@@ -324,7 +356,6 @@ def parse_sigma(
     if level not in valid_levels:
         level = "low"
 
-    # Autor / logsource
     author  = str(data.get("author", "Desconhecido")).strip()
     ls_raw  = data.get("logsource") or {}
     product  = ls_raw.get("product", "any")
@@ -381,12 +412,13 @@ def parse_sigma(
     if not resolved:
         tactic = _apply_heuristic(data, cfg)
 
-    # Caminho relativo
-    rule_folder = path.stem
-    rel_link = f"Sigma/{tactic}/{rule_folder}/{path.name}"
+    # Nome da pasta baseado no título (fallback: stem do arquivo)
+    folder_name = extract_folder_name_from_data(data, path.stem)
+    rel_link = f"Sigma/{tactic}/{folder_name}/{path.name}"
 
     meta = {
         "file":            path.name,
+        "folder":          folder_name,
         "tactic":          tactic,
         "technique_id":    technique,
         "level":           level,
@@ -407,7 +439,6 @@ def parse_sigma(
 
 _SIGMA_CLI_AVAILABLE: Optional[bool] = None
 _SIGMA_CLI_LOCK = threading.Lock()
-SIGMA_SEMAPHORE: Optional[threading.Semaphore] = None
 
 def _check_sigma_cli() -> bool:
     global _SIGMA_CLI_AVAILABLE
@@ -447,6 +478,39 @@ def validate_with_sigma_cli(path: Path, semaphore: threading.Semaphore) -> tuple
 IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".svg"}
 YAML_EXTS  = {".yml", ".yaml"}
 
+def migrate_loose_rule(yf: Path, base: Path, meta: dict) -> Optional[dict]:
+    """Move regra solta para estrutura granular e retorna meta atualizado."""
+    tactic = meta["tactic"]
+    folder_name = meta["folder"]
+    rule_dir = base / "Sigma" / tactic / folder_name
+    poc_dir = rule_dir / "poc"
+
+    try:
+        rule_dir.mkdir(parents=True, exist_ok=True)
+        poc_dir.mkdir(exist_ok=True)
+        (poc_dir / ".gitkeep").touch(exist_ok=True)
+
+        dest_yml = _resolve_collision(rule_dir / yf.name)
+        shutil.move(str(yf), str(dest_yml))
+        logger.info("Migrado: %s → Sigma/%s/%s/", yf.name, tactic, folder_name)
+
+        meta["link"] = f"Sigma/{tactic}/{folder_name}/{dest_yml.name}"
+        return meta
+    except Exception as e:
+        logger.error("Falha ao migrar %s: %s", yf.name, e)
+        return None
+
+def organize_duplicate(src: Path, base: Path) -> None:
+    dup_dir = base / "duplicates"
+    dup_dir.mkdir(exist_ok=True)
+    try:
+        dest = _resolve_collision(dup_dir / src.name)
+    except FileExistsError as exc:
+        logger.error(exc)
+        return
+    shutil.move(str(src), str(dest))
+    logger.info("Duplicata movida: %s → duplicates/", src.name)
+
 def collect_existing_rules(
     base: Path,
     cfg: dict,
@@ -460,9 +524,13 @@ def collect_existing_rules(
         return []
 
     inventory: list[dict] = []
+    to_migrate: list[tuple[Path, dict]] = []
+
     for tactic_dir in sigma_dir.iterdir():
         if not tactic_dir.is_dir():
             continue
+
+        # Primeiro: regras já organizadas (dentro de subpastas)
         for rule_folder in tactic_dir.iterdir():
             if not rule_folder.is_dir():
                 continue
@@ -472,7 +540,22 @@ def collect_existing_rules(
                     if meta:
                         inventory.append(meta)
 
-    logger.info("Regras já organizadas: %d", len(inventory))
+        # Depois: regras soltas diretamente em tactic_dir
+        for yf in tactic_dir.iterdir():
+            if yf.is_file() and yf.suffix.lower() in YAML_EXTS:
+                meta, reason = parse_sigma(yf, cfg, stats, seen_hashes, hash_lock, hash_cache)
+                if meta:
+                    to_migrate.append((yf, meta))
+                elif reason == "duplicate":
+                    organize_duplicate(yf, base)
+
+    # Migração (sequencial)
+    for yf, meta in to_migrate:
+        new_meta = migrate_loose_rule(yf, base, meta)
+        if new_meta:
+            inventory.append(new_meta)
+
+    logger.info("Regras já organizadas: %d (incluindo %d migradas)", len(inventory), len(to_migrate))
     return inventory
 
 def discover_files(
@@ -502,13 +585,15 @@ def discover_files(
     return yaml_files, image_files, md_files
 
 # =============================================================================
-# Organização de arquivos
+# Organização de arquivos novos
 # =============================================================================
 
 def organize_file(src: Path, meta: dict, base: Path) -> None:
-    rule_name = src.stem
+    """Move novo arquivo para a estrutura granular."""
+    tactic = meta["tactic"]
+    folder_name = meta["folder"]
     try:
-        rule_dir = _safe_dest(base, "Sigma", meta["tactic"], rule_name)
+        rule_dir = _safe_dest(base, "Sigma", tactic, folder_name)
     except ValueError as exc:
         logger.error("Erro ao criar diretório para %s: %s", src.name, exc)
         return
@@ -527,18 +612,7 @@ def organize_file(src: Path, meta: dict, base: Path) -> None:
         logger.error(exc)
         return
     shutil.move(str(src), str(dest_yml))
-    logger.info("Movido: %s → Sigma/%s/%s/", src.name, meta["tactic"], rule_name)
-
-def organize_duplicate(src: Path, base: Path) -> None:
-    dup_dir = base / "duplicates"
-    dup_dir.mkdir(exist_ok=True)
-    try:
-        dest = _resolve_collision(dup_dir / src.name)
-    except FileExistsError as exc:
-        logger.error(exc)
-        return
-    shutil.move(str(src), str(dest))
-    logger.info("Duplicata movida: %s → duplicates/", src.name)
+    logger.info("Movido: %s → Sigma/%s/%s/", src.name, tactic, folder_name)
 
 def organize_image(src: Path, base: Path) -> None:
     img_dir = base / "img"
@@ -744,10 +818,8 @@ def process_repo(
     dup_lock = threading.Lock()
     hash_cache = HashCache(base / "hash_cache.json")
 
-    # Semáforo para sigma-cli
     semaphore = threading.Semaphore(cfg.get("sigma_semaphore", 2))
 
-    # Cria pastas base
     for tactic in cfg["mitre_tactics"] + ["uncategorized"]:
         (base / "Sigma" / tactic).mkdir(parents=True, exist_ok=True)
     for folder in cfg["extra_folders"]:
@@ -809,9 +881,7 @@ def process_repo(
         for md in md_files:
             organize_markdown(md, base)
 
-    # Salva cache de hash
     hash_cache.save()
-
     return inventory, stats
 
 # =============================================================================

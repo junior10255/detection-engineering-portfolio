@@ -1,1 +1,5 @@
-{}
+{
+  "C:\\Users\\Junior\\Documents\\GitHub\\detection-engineering-portfolio\\Sigma\\execution\\01_proc_creation_win_wmic_lateral_movement_ip.yml": "9250beae839c2f82127f5ebcf4cd15a516f7e5040449b2421a409c844a9654fb",
+  "C:\\Users\\Junior\\Documents\\GitHub\\detection-engineering-portfolio\\Sigma\\impact\\01_manipulating_shadow_copies_via_WMIC.yml": "187a543702587c8a22712943a0cee8d4a07a95116483efa70ca955451ad72b5d",
+  "C:\\Users\\Junior\\Documents\\GitHub\\detection-engineering-portfolio\\Sigma\\persistence\\01_persistence_via_run_registry_key.yml": "86b21f70c3cbac104b1f373a071062dcdd53e69afc45be0b9331365077a68514"
+}
