@@ -5,6 +5,7 @@
     "average_quality": 100.0,
     "total_rules": 3,
     "tactics_covered": 3,
+    "total_tactics": 14,
     "missing_tactics": [
         "reconnaissance",
         "resource_development",
@@ -19,11 +20,17 @@
         "exfiltration"
     ],
     "invalid_rules": 0,
+    "sigma_cli_failures": 0,
     "severity_distribution": {
         "critical": 0,
         "high": 2,
         "medium": 1,
         "low": 0
+    },
+    "tactic_counts": {
+        "execution": 1,
+        "impact": 1,
+        "persistence": 1
     },
     "top_authors": {
         "Luiz Junior": 3
@@ -31,5 +38,5 @@
     "top_logsources": {
         "windows/any": 3
     },
-    "last_update": "2026-04-11T18:57:54.954545"
+    "last_update": "2026-04-13T19:46:14.505013"
 }

@@ -13,6 +13,8 @@
 - **Regras Inválidas Ignoradas:** 0
 - **Impacto Alto (Critical/High):** 66.67% das regras
 
+> 💡 Veja o [Dashboard Interativo](dashboard.html) para análise visual completa.
+
 ## 🚨 Coverage Gaps
 - Reconnaissance
 - Resource Development
@@ -28,12 +30,11 @@
 
 
 ## 📋 Detection Inventory (ordenado por risco)
-| Nível | Tática | Regra | Qualidade |
-|:---:|:---|:---|:---:|
-| 🟠 | Execution | `01_proc_creation_win_wmic_lateral_movement_ip.yml` | 100.0% |
-| 🟠 | Impact | `01_manipulating_shadow_copies_via_WMIC.yml` | 100.0% |
-| 🟡 | Persistence | `01_persistence_via_run_registry_key.yml` | 100.0% |
-
+| Nível | Tática | Regra | Qualidade | Link |
+|:---:|:---|:---|:---:|:---:|
+| 🟠 | Execution | `01_proc_creation_win_wmic_lateral_movement_ip.yml` | 100.0% | [📄 Ver](Sigma/execution/01_proc_creation_win_wmic_lateral_movement_ip.yml) |
+| 🟠 | Impact | `01_manipulating_shadow_copies_via_WMIC.yml` | 100.0% | [📄 Ver](Sigma/impact/01_manipulating_shadow_copies_via_WMIC.yml) |
+| 🟡 | Persistence | `01_persistence_via_run_registry_key.yml` | 100.0% | [📄 Ver](Sigma/persistence/01_persistence_via_run_registry_key.yml) |
 
 ---
-*Gerado via script.py v14.1 em 2026-04-11 18:57:54*
+*Gerado via script.py v16.1 em 2026-04-13 19:46:14*

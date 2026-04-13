@@ -1,0 +1,83 @@
+max_file_size_mb: 5
+max_workers: 8
+ci_min_coverage: 50
+mitre_tactics:
+- reconnaissance
+- resource_development
+- initial_access
+- execution
+- persistence
+- privilege_escalation
+- defense_evasion
+- credential_access
+- discovery
+- lateral_movement
+- collection
+- command_and_control
+- exfiltration
+- impact
+extra_folders:
+- research/pocs
+- img
+- tools
+- audit
+id_to_tactic:
+  t1595: reconnaissance
+  t1566: initial_access
+  t1059: execution
+  t1047: execution
+  t1053: persistence
+  t1547: persistence
+  t1021: lateral_movement
+  t1003: credential_access
+  t1027: defense_evasion
+  t1070: defense_evasion
+  t1087: discovery
+  t1082: discovery
+  t1485: impact
+  t1071: command_and_control
+heuristic_weights:
+  credential_access:
+  - - lsass
+    - 3
+  - - mimikatz
+    - 4
+  - - password
+    - 1
+  lateral_movement:
+  - - psexec
+    - 4
+  - - smb
+    - 2
+  - - rpc
+    - 1
+  discovery:
+  - - whoami
+    - 3
+  - - net user
+    - 3
+  - - ipconfig
+    - 2
+  impact:
+  - - ransom
+    - 4
+  - - encrypt
+    - 3
+  - - shadowcopy
+    - 4
+  defense_evasion:
+  - - disable
+    - 1
+  - - obfuscation
+    - 3
+  - - tamper
+    - 3
+heuristic_min_score: 3
+max_quality_score: 100
+quality_bonus:
+  description: 20
+  author: 10
+  falsepositives: 15
+  references: 10
+  tags: 25
+  id: 20

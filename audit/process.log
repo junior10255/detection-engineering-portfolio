@@ -3,3 +3,15 @@
 [*] [2026-04-11 18:54:47] Iniciando Xtreme Organizer v14.1 (Deep Scan)...
 [*] [2026-04-11 18:54:47] Movido: 01_proc_creation_win_wmic_lateral_movement_ip.yml -> execution
 [*] [2026-04-11 18:57:54] Iniciando Xtreme Organizer v14.1...
+[INFO] 2026-04-13 19:37:51 === Xtreme Organizer v16.0 | Modo: Normal ===
+[INFO] 2026-04-13 19:37:51 config.yaml não encontrado — defaults salvos em C:\Users\Junior\Documents\GitHub\detection-engineering-portfolio\config.yaml
+[INFO] 2026-04-13 19:37:51 ── Repositório: C:\Users\Junior\Documents\GitHub\detection-engineering-portfolio
+[INFO] 2026-04-13 19:37:51 Regras já organizadas em Sigma/: 3
+[INFO] 2026-04-13 19:37:51 Arquivos soltos: 0 YAML | 0 imagens | 0 markdown
+[INFO] 2026-04-13 19:46:14 === Xtreme Organizer v16.1 | Modo: Normal ===
+[INFO] 2026-04-13 19:46:14 Config carregada: C:\Users\Junior\Documents\GitHub\detection-engineering-portfolio\config.yaml
+[INFO] 2026-04-13 19:46:14 ── Repositório: C:\Users\Junior\Documents\GitHub\detection-engineering-portfolio
+[INFO] 2026-04-13 19:46:14 Regras já organizadas em Sigma/: 3
+[INFO] 2026-04-13 19:46:14 Arquivos soltos: 0 YAML | 0 imagens | 0 markdown
+[INFO] 2026-04-13 19:46:14 Finalizado | Regras: 3 | Cobertura: 21.43% | Qualidade: 100.0% | High Impact: 66.67%
+[INFO] 2026-04-13 19:46:14 Gerados em C:\Users\Junior\Documents\GitHub\detection-engineering-portfolio: README.md | dashboard.html | metrics.json | metrics.prom
