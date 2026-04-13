@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang='pt-BR'>
+<head>
+<meta charset='UTF-8'>
+<meta name='viewport' content='width=device-width,initial-scale=1.0'>
+<title>🛡️ Detection Portfolio Dashboard</title>
+<style>:root{--bg:#0d1117;--surf:#161b22;--bord:#30363d;--text:#c9d1d9;--muted:#8b949e;      --acc:#58a6ff;--crit:#f85149;--high:#d29922;--med:#3fb950;--low:#58a6ff;}*{box-sizing:border-box;margin:0;padding:0;}body{background:var(--bg);color:var(--text);font-family:'Segoe UI',monospace;padding:24px;}h1{font-size:1.6rem;margin-bottom:4px;}.sub{color:var(--muted);font-size:.85rem;margin-bottom:24px;}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px;}.card{background:var(--surf);border:1px solid var(--bord);border-radius:8px;padding:16px;}.card-val{font-size:1.9rem;font-weight:700;color:var(--acc);}.card-lbl{color:var(--muted);font-size:.7rem;margin-top:4px;text-transform:uppercase;letter-spacing:.06em;}.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;}.box{background:var(--surf);border:1px solid var(--bord);border-radius:8px;padding:16px;}.box h2{font-size:.9rem;color:var(--muted);margin-bottom:12px;}canvas{max-height:260px;}.sec{font-size:1rem;font-weight:600;margin:24px 0 12px;border-bottom:1px solid var(--bord);padding-bottom:8px;}input.srch{width:100%;padding:8px 12px;background:var(--surf);border:1px solid var(--bord);           border-radius:6px;color:var(--text);font-size:.9rem;margin-bottom:12px;outline:none;}table{width:100%;border-collapse:collapse;font-size:.83rem;}th{text-align:left;padding:8px 12px;background:var(--surf);border-bottom:2px solid var(--bord);   color:var(--muted);cursor:pointer;user-select:none;}th:hover{color:var(--acc);}td{padding:7px 12px;border-bottom:1px solid var(--bord);}tr:hover td{background:rgba(88,166,255,.05);}.b{display:inline-block;padding:2px 8px;border-radius:12px;font-size:.72rem;font-weight:600;}.bc{background:rgba(248,81,73,.15);color:var(--crit);}.bh{background:rgba(210,153,34,.15);color:var(--high);}.bm{background:rgba(63,185,80,.15);color:var(--med);}.bl{background:rgba(88,166,255,.15);color:var(--low);}a.lnk{color:var(--acc);text-decoration:none;font-size:.8rem;}a.lnk:hover{text-decoration:underline;}.gap-tag{display:inline-block;background:rgba(248,81,73,.1);color:var(--crit);         border:1px solid var(--crit);border-radius:4px;padding:2px 8px;margin:3px;font-size:.76rem;}@media(max-width:700px){.g2{grid-template-columns:1fr;}}</style>
+</head>
+<body>
+<h1>🛡️ Detection Engineering Portfolio</h1>
+<p class='sub'>Atualizado em <span id='ts'></span> &nbsp;|&nbsp; script.py v16.1</p>
+<div class='cards'>
+  <div class='card'><div class='card-val' id='v-tot'>-</div><div class='card-lbl'>Total de Regras</div></div>
+  <div class='card'><div class='card-val' id='v-cov'>-</div><div class='card-lbl'>Cobertura MITRE</div></div>
+  <div class='card'><div class='card-val' id='v-qua'>-</div><div class='card-lbl'>Qualidade Média</div></div>
+  <div class='card'><div class='card-val' id='v-imp'>-</div><div class='card-lbl'>High Impact</div></div>
+  <div class='card'><div class='card-val' id='v-den'>-</div><div class='card-lbl'>Densidade Ativa</div></div>
+  <div class='card'><div class='card-val' id='v-inv'>-</div><div class='card-lbl'>Inválidas</div></div>
+  <div class='card'><div class='card-val' id='v-cli'>-</div><div class='card-lbl'>Falhas sigma-cli</div></div>
+</div>
+<div class='g2'>
+  <div class='box'><h2>Distribuição por Severidade</h2><canvas id='c-sev'></canvas></div>
+  <div class='box'><h2>Regras por Tática MITRE ATT&amp;CK</h2><canvas id='c-tac'></canvas></div>
+</div>
+<div class='g2'>
+  <div class='box'><h2>Top Log Sources</h2><canvas id='c-ls'></canvas></div>
+  <div class='box'><h2>🚨 Coverage Gaps</h2><div id='gaps' style='margin-top:8px;line-height:2.2'></div></div>
+</div>
+<div class='sec'>📋 Detection Inventory</div>
+<input class='srch' id='srch' placeholder='🔍 Filtrar por regra, tática, autor, logsource...'>
+<table>
+  <thead><tr>
+    <th data-col='level'>Nível ↕</th>
+    <th data-col='tactic'>Tática ↕</th>
+    <th>Regra</th>
+    <th data-col='author'>Autor ↕</th>
+    <th>Logsource</th>
+    <th data-col='score_percent'>Qualidade ↕</th>
+    <th>Link</th>
+  </tr></thead>
+  <tbody id='tbody'></tbody>
+</table>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js'></script><script>const M={
+  "global_coverage": 21.43,
+  "active_density": 1.0,
+  "high_impact_ratio": 66.67,
+  "average_quality": 100.0,
+  "total_rules": 3,
+  "tactics_covered": 3,
+  "total_tactics": 14,
+  "missing_tactics": [
+    "reconnaissance",
+    "resource_development",
+    "initial_access",
+    "privilege_escalation",
+    "defense_evasion",
+    "credential_access",
+    "discovery",
+    "lateral_movement",
+    "collection",
+    "command_and_control",
+    "exfiltration"
+  ],
+  "invalid_rules": 0,
+  "sigma_cli_failures": 0,
+  "severity_distribution": {
+    "critical": 0,
+    "high": 2,
+    "medium": 1,
+    "low": 0
+  },
+  "tactic_counts": {
+    "execution": 1,
+    "impact": 1,
+    "persistence": 1
+  },
+  "top_authors": {
+    "Luiz Junior": 3
+  },
+  "top_logsources": {
+    "windows/any": 3
+  },
+  "last_update": "2026-04-13T19:46:14.505013"
+};const INV=[{"file": "01_proc_creation_win_wmic_lateral_movement_ip.yml", "tactic": "execution", "level": "high", "score": 100, "score_percent": 100.0, "author": "Luiz Junior", "logsource": "windows/any", "link": "Sigma/execution/01_proc_creation_win_wmic_lateral_movement_ip.yml", "sigma_cli_valid": null}, {"file": "01_manipulating_shadow_copies_via_WMIC.yml", "tactic": "impact", "level": "high", "score": 100, "score_percent": 100.0, "author": "Luiz Junior", "logsource": "windows/any", "link": "Sigma/impact/01_manipulating_shadow_copies_via_WMIC.yml", "sigma_cli_valid": null}, {"file": "01_persistence_via_run_registry_key.yml", "tactic": "persistence", "level": "medium", "score": 100, "score_percent": 100.0, "author": "Luiz Junior", "logsource": "windows/any", "link": "Sigma/persistence/01_persistence_via_run_registry_key.yml", "sigma_cli_valid": null}];document.getElementById('v-tot').textContent=M.total_rules;document.getElementById('v-cov').textContent=M.global_coverage+'%';document.getElementById('v-qua').textContent=M.average_quality+'%';document.getElementById('v-imp').textContent=M.high_impact_ratio+'%';document.getElementById('v-den').textContent=M.active_density;document.getElementById('v-inv').textContent=M.invalid_rules;document.getElementById('v-cli').textContent=M.sigma_cli_failures;document.getElementById('ts').textContent=M.last_update.replace('T',' ').slice(0,19);const gEl=document.getElementById('gaps');if(!M.missing_tactics.length){  gEl.innerHTML='<span style="color:#3fb950">✅ Todas as 14 táticas cobertas!</span>';}else{  gEl.innerHTML=M.missing_tactics.map(t=>'<span class="gap-tag">'+t.replace(/_/g,' ')+'</span>').join('');}Chart.defaults.color='#8b949e';new Chart(document.getElementById('c-sev').getContext('2d'),{  type:'doughnut',  data:{labels:['Critical','High','Medium','Low'],        datasets:[{data:[M.severity_distribution.critical,M.severity_distribution.high,                        M.severity_distribution.medium,M.severity_distribution.low],                   backgroundColor:['#f85149','#d29922','#3fb950','#58a6ff'],borderWidth:0}]},  options:{plugins:{legend:{labels:{color:'#c9d1d9'}}},cutout:'65%'}});const tacs=Object.keys(M.tactic_counts||{}).sort();new Chart(document.getElementById('c-tac').getContext('2d'),{  type:'bar',  data:{labels:tacs.map(t=>t.replace(/_/g,' ')),        datasets:[{label:'Regras',data:tacs.map(t=>M.tactic_counts[t]),                   backgroundColor:'#58a6ff',borderRadius:4}]},  options:{indexAxis:'y',plugins:{legend:{display:false}},           scales:{x:{ticks:{color:'#8b949e'},grid:{color:'#30363d'}},                   y:{ticks:{color:'#c9d1d9',font:{size:11}},grid:{color:'#30363d'}}}}});const lsL=Object.keys(M.top_logsources||{});new Chart(document.getElementById('c-ls').getContext('2d'),{  type:'bar',  data:{labels:lsL,datasets:[{label:'Regras',data:lsL.map(k=>M.top_logsources[k]),                              backgroundColor:'#3fb950',borderRadius:4}]},  options:{indexAxis:'y',plugins:{legend:{display:false}},           scales:{x:{ticks:{color:'#8b949e'},grid:{color:'#30363d'}},                   y:{ticks:{color:'#c9d1d9',font:{size:11}},grid:{color:'#30363d'}}}}});const RANK={critical:4,high:3,medium:2,low:1};const CLS={critical:'bc',high:'bh',medium:'bm',low:'bl'};let sortCol='level',sortDir=-1,filtered=[...INV];function render(){  filtered.sort((a,b)=>{    const av=sortCol==='level'?(RANK[a.level]||0):(a[sortCol]??0);    const bv=sortCol==='level'?(RANK[b.level]||0):(b[sortCol]??0);    return typeof av==='string'?sortDir*av.localeCompare(bv):sortDir*(av-bv);  });  document.getElementById('tbody').innerHTML=filtered.map(r=>{    const repo=r.repo?` <span style='color:var(--muted);font-size:.7rem'>[${r.repo}]</span>`:'';    const cli=r.sigma_cli_valid===false?` <span style='color:var(--crit)' title='sigma-cli falhou'>⚠</span>`:'';    return '<tr>'      +'<td><span class="b '+(CLS[r.level]||'bl')+'">'+r.level+'</span></td>'      +'<td>'+r.tactic.replace(/_/g,' ')+'</td>'      +'<td><code style="font-size:.78rem">'+r.file+'</code>'+repo+cli+'</td>'      +'<td>'+r.author+'</td>'      +'<td>'+r.logsource+'</td>'      +'<td>'+r.score_percent+'%</td>'      +'<td><a class="lnk" href="'+r.link+'" target="_blank">📄 Ver</a></td>'      +'</tr>';  }).join('');}document.querySelectorAll('th[data-col]').forEach(th=>{  th.addEventListener('click',()=>{    if(sortCol===th.dataset.col)sortDir*=-1;    else{sortCol=th.dataset.col;sortDir=-1;}    render();  });});document.getElementById('srch').addEventListener('input',function(){  const q=this.value.toLowerCase();  filtered=INV.filter(i=>[i.file,i.tactic,i.level,i.author,i.logsource]    .some(v=>v.toLowerCase().includes(q)));  render();});render();</script>
+</body>
+</html>
