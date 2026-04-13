@@ -49,3 +49,14 @@
 [INFO] 2026-04-13 20:33:17 Arquivos soltos: 0 YAML | 0 imagens | 0 markdown
 [INFO] 2026-04-13 20:33:17 Finalizado | Regras: 0 | Cobertura: 0.0% | Qualidade: 0.0% | High Impact: 0.0%
 [INFO] 2026-04-13 20:33:17 Gerados: README.md | metrics.json | metrics.prom | hash_cache.json
+[INFO] 2026-04-13 20:44:02 === Xtreme Organizer v18.1 | Modo: Normal ===
+[INFO] 2026-04-13 20:44:02 Config carregada: C:\Users\Junior\Documents\GitHub\detection-engineering-portfolio\config.yaml
+[INFO] 2026-04-13 20:44:02 ── Repositório: C:\Users\Junior\Documents\GitHub\detection-engineering-portfolio
+[INFO] 2026-04-13 20:44:02 Hash cache carregado: 0 entradas
+[INFO] 2026-04-13 20:44:02 Migrado: 01_proc_creation_win_wmic_lateral_movement_ip.yml → Sigma/execution/movimentacao_lateral_via_wmic_com_execucao_remota/
+[INFO] 2026-04-13 20:44:02 Migrado: 01_manipulating_shadow_copies_via_WMIC.yml → Sigma/impact/manipulacao_de_shadow_copies_via_wmic/
+[INFO] 2026-04-13 20:44:02 Migrado: 01_persistence_via_run_registry_key.yml → Sigma/persistence/persistence_via_run_registry_key/
+[INFO] 2026-04-13 20:44:02 Regras já organizadas: 3 (incluindo 3 migradas)
+[INFO] 2026-04-13 20:44:02 Arquivos soltos: 0 YAML | 0 imagens | 0 markdown
+[INFO] 2026-04-13 20:44:02 Finalizado | Regras: 3 | Cobertura: 21.43% | Qualidade: 100.0% | High Impact: 66.67%
+[INFO] 2026-04-13 20:44:02 Gerados: README.md | metrics.json | metrics.prom | hash_cache.json
