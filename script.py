@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-Detection Engineering Portfolio - Xtreme v18.1 (Custom Rule Folder Names)
-==========================================================================
-- Nome da subpasta da regra baseado no campo 'title' (sanitizado)
-- Migração automática de regras soltas em Sigma/<tatica>/
-- Fallback para nome do arquivo se título ausente/inválido
-- Hash cache, thread-safety, sigma-cli com semáforo
+Detection Engineering Portfolio - Xtreme v18.2 (Hygiene Edition)
+==================================================================
+- Normaliza subpastas de regras para o nome derivado do título
+- Remove pastas vazias após migração
+- Opção de .gitkeep nas táticas (melhora visualização no GitHub)
+- Higienização completa da estrutura Sigma/
 """
 
 from __future__ import annotations
@@ -28,7 +28,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional, Set, Tuple, Dict
 
-SCRIPT_VERSION = "18.1"
+SCRIPT_VERSION = "18.2"
 SCRIPT_NAME = Path(__file__).name
 
 # =============================================================================
@@ -61,6 +61,7 @@ DEFAULT_CONFIG: dict = {
     "ci_min_coverage": 50,
     "ci_min_quality": 70,
     "sigma_semaphore": 2,
+    "add_tactic_gitkeep": True,   # Cria .gitkeep na raiz de cada tática para evitar colapso no GitHub
     "mitre_tactics": [
         "reconnaissance", "resource_development", "initial_access", "execution",
         "persistence", "privilege_escalation", "defense_evasion", "credential_access",
@@ -189,53 +190,51 @@ def _safe_dest(base: Path, *parts: str) -> Path:
     return dest
 
 def is_relative_to(path: Path, parent: Path) -> bool:
-    """Compatível com Python <3.9"""
     try:
         path.relative_to(parent)
         return True
     except ValueError:
         return False
 
+def remove_empty_dir(path: Path) -> None:
+    """Remove diretório se estiver vazio (apenas .gitkeep é considerado vazio)."""
+    if not path.is_dir():
+        return
+    contents = list(path.iterdir())
+    if not contents or (len(contents) == 1 and contents[0].name == ".gitkeep"):
+        try:
+            for f in contents:
+                f.unlink()
+            path.rmdir()
+            logger.debug("Diretório vazio removido: %s", path)
+        except OSError:
+            pass
+
 # =============================================================================
-# Sanitização de título para nome de pasta
+# Sanitização de título
 # =============================================================================
 
 def sanitize_folder_name(title: str) -> str:
-    """
-    Converte um título em um nome de pasta válido:
-    - Minúsculas
-    - Substitui espaços e caracteres especiais por underscore
-    - Remove acentos
-    - Apenas letras, números e underscores
-    - Limita a 64 caracteres
-    """
     if not title:
         return ""
-    # Remove acentos
     title = unicodedata.normalize('NFKD', title).encode('ASCII', 'ignore').decode('ASCII')
-    # Substitui caracteres não alfanuméricos por underscore
     title = re.sub(r'[^a-zA-Z0-9]+', '_', title)
-    # Remove underscores duplicados e laterais
     title = re.sub(r'_+', '_', title).strip('_')
-    # Minúsculas
     title = title.lower()
-    # Limita tamanho
     if len(title) > 64:
         title = title[:64].rstrip('_')
     return title
 
 def extract_folder_name_from_data(data: dict, fallback: str) -> str:
-    """Extrai nome da pasta a partir do campo 'title' da regra."""
     title = data.get("title", "")
     if isinstance(title, str):
         folder = sanitize_folder_name(title)
         if folder:
             return folder
-    # Fallback: usa o nome do arquivo sem extensão
     return fallback
 
 # =============================================================================
-# Hash Cache (persistente em disco)
+# Hash Cache
 # =============================================================================
 
 class HashCache:
@@ -273,7 +272,6 @@ class HashCache:
             self.cache[key] = file_hash
 
 def compute_content_hash(path: Path, cache: Optional[HashCache] = None) -> str:
-    """SHA256 do conteúdo normalizado, com cache opcional."""
     if cache:
         cached = cache.get(path)
         if cached:
@@ -312,10 +310,6 @@ def parse_sigma(
     hash_lock: threading.Lock,
     hash_cache: HashCache,
 ) -> Tuple[Optional[dict], str]:
-    """
-    Retorna (meta, reason).
-    reason pode ser: "ok", "duplicate", "invalid", "too_large", "yaml_error", "io_error"
-    """
     max_bytes = int(cfg["max_file_size_mb"] * 1024 * 1024)
     if path.stat().st_size > max_bytes:
         logger.warning("Arquivo muito grande, ignorado: %s", path.name)
@@ -350,7 +344,6 @@ def parse_sigma(
         stats.increment_invalid()
         return None, "invalid"
 
-    # Nível
     valid_levels = set(stats.severity.keys())
     level = str(data.get("level", "low")).strip().lower()
     if level not in valid_levels:
@@ -363,7 +356,6 @@ def parse_sigma(
     category = ls_raw.get("category", "any")
     logsource = f"{product}/{service}/{category}".lower()
 
-    # Score de qualidade
     bonus: dict    = cfg["quality_bonus"]
     max_score: int = cfg["max_quality_score"]
     raw_score = 0
@@ -384,7 +376,6 @@ def parse_sigma(
     score         = min(max_score, raw_score)
     score_percent = round((score / max_score) * 100, 2)
 
-    # Tática e técnica
     tactic    = "uncategorized"
     technique = None
     id_map: dict   = cfg["id_to_tactic"]
@@ -412,7 +403,6 @@ def parse_sigma(
     if not resolved:
         tactic = _apply_heuristic(data, cfg)
 
-    # Nome da pasta baseado no título (fallback: stem do arquivo)
     folder_name = extract_folder_name_from_data(data, path.stem)
     rel_link = f"Sigma/{tactic}/{folder_name}/{path.name}"
 
@@ -434,7 +424,7 @@ def parse_sigma(
     return meta, "ok"
 
 # =============================================================================
-# sigma-cli (com semáforo)
+# sigma-cli
 # =============================================================================
 
 _SIGMA_CLI_AVAILABLE: Optional[bool] = None
@@ -472,14 +462,14 @@ def validate_with_sigma_cli(path: Path, semaphore: threading.Semaphore) -> tuple
             return False, str(exc)
 
 # =============================================================================
-# Descoberta e coleta de arquivos
+# Migração e Normalização
 # =============================================================================
 
 IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".svg"}
 YAML_EXTS  = {".yml", ".yaml"}
 
 def migrate_loose_rule(yf: Path, base: Path, meta: dict) -> Optional[dict]:
-    """Move regra solta para estrutura granular e retorna meta atualizado."""
+    """Move regra solta em Sigma/<tactic>/ para Sigma/<tactic>/<folder>/ e retorna meta atualizado."""
     tactic = meta["tactic"]
     folder_name = meta["folder"]
     rule_dir = base / "Sigma" / tactic / folder_name
@@ -492,13 +482,48 @@ def migrate_loose_rule(yf: Path, base: Path, meta: dict) -> Optional[dict]:
 
         dest_yml = _resolve_collision(rule_dir / yf.name)
         shutil.move(str(yf), str(dest_yml))
-        logger.info("Migrado: %s → Sigma/%s/%s/", yf.name, tactic, folder_name)
+        logger.info("Migrado (solto): %s → Sigma/%s/%s/", yf.name, tactic, folder_name)
 
         meta["link"] = f"Sigma/{tactic}/{folder_name}/{dest_yml.name}"
         return meta
     except Exception as e:
         logger.error("Falha ao migrar %s: %s", yf.name, e)
         return None
+
+def normalize_existing_rule(yf: Path, base: Path, meta: dict) -> Optional[dict]:
+    """
+    Se a regra está em uma subpasta cujo nome difere do folder_name ideal,
+    move para a pasta correta e remove a antiga se vazia.
+    """
+    current_parent = yf.parent
+    expected_parent = base / "Sigma" / meta["tactic"] / meta["folder"]
+
+    if current_parent == expected_parent:
+        # Já está no lugar correto, apenas garante poc/.gitkeep
+        poc_dir = current_parent / "poc"
+        poc_dir.mkdir(exist_ok=True)
+        (poc_dir / ".gitkeep").touch(exist_ok=True)
+        return meta
+
+    # Precisa realocar
+    try:
+        expected_parent.mkdir(parents=True, exist_ok=True)
+        poc_dir = expected_parent / "poc"
+        poc_dir.mkdir(exist_ok=True)
+        (poc_dir / ".gitkeep").touch(exist_ok=True)
+
+        dest_yml = _resolve_collision(expected_parent / yf.name)
+        shutil.move(str(yf), str(dest_yml))
+        logger.info("Normalizado: %s → Sigma/%s/%s/", yf.name, meta["tactic"], meta["folder"])
+
+        # Remove diretório antigo se vazio
+        remove_empty_dir(current_parent)
+
+        meta["link"] = f"Sigma/{meta['tactic']}/{meta['folder']}/{dest_yml.name}"
+        return meta
+    except Exception as e:
+        logger.error("Falha ao normalizar %s: %s", yf.name, e)
+        return meta  # retorna original para não perder do inventário
 
 def organize_duplicate(src: Path, base: Path) -> None:
     dup_dir = base / "duplicates"
@@ -525,10 +550,15 @@ def collect_existing_rules(
 
     inventory: list[dict] = []
     to_migrate: list[tuple[Path, dict]] = []
+    to_normalize: list[tuple[Path, dict]] = []
 
     for tactic_dir in sigma_dir.iterdir():
         if not tactic_dir.is_dir():
             continue
+
+        # .gitkeep na raiz da tática (opcional)
+        if cfg.get("add_tactic_gitkeep", True):
+            (tactic_dir / ".gitkeep").touch(exist_ok=True)
 
         # Primeiro: regras já organizadas (dentro de subpastas)
         for rule_folder in tactic_dir.iterdir():
@@ -538,7 +568,7 @@ def collect_existing_rules(
                 if yf.is_file() and yf.suffix.lower() in YAML_EXTS:
                     meta, _ = parse_sigma(yf, cfg, stats, seen_hashes, hash_lock, hash_cache)
                     if meta:
-                        inventory.append(meta)
+                        to_normalize.append((yf, meta))
 
         # Depois: regras soltas diretamente em tactic_dir
         for yf in tactic_dir.iterdir():
@@ -555,7 +585,14 @@ def collect_existing_rules(
         if new_meta:
             inventory.append(new_meta)
 
-    logger.info("Regras já organizadas: %d (incluindo %d migradas)", len(inventory), len(to_migrate))
+    # Normalização (sequencial)
+    for yf, meta in to_normalize:
+        new_meta = normalize_existing_rule(yf, base, meta)
+        if new_meta:
+            inventory.append(new_meta)
+
+    logger.info("Regras existentes: %d (migradas: %d, normalizadas: %d)",
+                len(inventory), len(to_migrate), len(to_normalize))
     return inventory
 
 def discover_files(
@@ -584,12 +621,7 @@ def discover_files(
 
     return yaml_files, image_files, md_files
 
-# =============================================================================
-# Organização de arquivos novos
-# =============================================================================
-
 def organize_file(src: Path, meta: dict, base: Path) -> None:
-    """Move novo arquivo para a estrutura granular."""
     tactic = meta["tactic"]
     folder_name = meta["folder"]
     try:
