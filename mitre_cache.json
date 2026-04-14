@@ -1,0 +1,2923 @@
+{
+  "t1055.011": [
+    "defense_evasion",
+    "privilege_escalation"
+  ],
+  "t1657": [
+    "impact"
+  ],
+  "t1559.003": [
+    "execution"
+  ],
+  "t1497": [
+    "defense_evasion",
+    "discovery"
+  ],
+  "t1102": [
+    "command_and_control"
+  ],
+  "t1552.001": [
+    "credential_access"
+  ],
+  "t1568.003": [
+    "command_and_control"
+  ],
+  "t1218.005": [
+    "defense_evasion"
+  ],
+  "t1547.015": [
+    "persistence",
+    "privilege_escalation"
+  ],
+  "t1608": [
+    "resource_development"
+  ],
+  "t1608.005": [
+    "resource_development"
+  ],
+  "t1104": [
+    "command_and_control"
+  ],
+  "t1562.010": [
+    "defense_evasion"
+  ],
+  "t1480": [
+    "defense_evasion"
+  ],
+  "t1619": [
+    "discovery"
+  ],
+  "t1606.001": [
+    "credential_access"
+  ],
+  "t1654": [
+    "discovery"
+  ],
+  "t1134.001": [
+    "defense_evasion",
+    "privilege_escalation"
+  ],
+  "t1567.001": [
+    "exfiltration"
+  ],
+  "t1021.007": [
+    "lateral_movement"
+  ],
+  "t1205.001": [
+    "defense_evasion",
+    "persistence",
+    "command_and_control"
+  ],
+  "t1027.012": [
+    "defense_evasion"
+  ],
+  "t1583.006": [
+    "resource_development"
+  ],
+  "t1542": [
+    "defense_evasion",
+    "persistence"
+  ],
+  "t1114.003": [
+    "collection"
+  ],
+  "t1074": [
+    "collection"
+  ],
+  "t1649": [
+    "credential_access"
+  ],
+  "t1098.005": [
+    "persistence",
+    "privilege_escalation"
+  ],
+  "t1049": [
+    "discovery"
+  ],
+  "t1584": [
+    "resource_development"
+  ],
+  "t1553.005": [
+    "defense_evasion"
+  ],
+  "t1600.002": [
+    "defense_evasion"
+  ],
+  "t1528": [
+    "credential_access"
+  ],
+  "t1612": [
+    "defense_evasion"
+  ],
+  "t1055.002": [
+    "defense_evasion",
+    "privilege_escalation"
+  ],
+  "t1218.012": [
+    "defense_evasion"
+  ],
+  "t1586": [
+    "resource_development"
+  ],
+  "t1569.001": [
+    "execution"
+  ],
+  "t1584.005": [
+    "resource_development"
+  ],
+  "t1059.008": [
+    "execution"
+  ],
+  "t1552.003": [
+    "credential_access"
+  ],
+  "t1546.001": [
+    "privilege_escalation",
+    "persistence"
+  ],
+  "t1041": [
+    "exfiltration"
+  ],
+  "t1134.004": [
+    "defense_evasion",
+    "privilege_escalation"
+  ],
+  "t1591": [
+    "reconnaissance"
+  ],
+  "t1606": [
+    "credential_access"
+  ],
+  "t1621": [
+    "credential_access"
+  ],
+  "t1554": [
+    "persistence"
+  ],
+  "t1552.008": [
+    "credential_access"
+  ],
+  "t1059.001": [
+    "execution"
+  ],
+  "t1072": [
+    "execution",
+    "lateral_movement"
+  ],
+  "t1055.014": [
+    "defense_evasion",
+    "privilege_escalation"
+  ],
+  "t1071.002": [
+    "command_and_control"
+  ],
+  "t1679": [
+    "defense_evasion"
+  ],
+  "t1212": [
+    "credential_access"
+  ],
+  "t1546.014": [
+    "privilege_escalation",
+    "persistence"
+  ],
+  "t1102.003": [
+    "command_and_control"
+  ],
+  "t1590": [
+    "reconnaissance"
+  ],
+  "t1057": [
+    "discovery"
+  ],
+  "t1598.002": [
+    "reconnaissance"
+  ],
+  "t1098.001": [
+    "persistence",
+    "privilege_escalation"
+  ],
+  "t1204": [
+    "execution"
+  ],
+  "t1491.001": [
+    "impact"
+  ],
+  "t1564.002": [
+    "defense_evasion"
+  ],
+  "t1134.003": [
+    "defense_evasion",
+    "privilege_escalation"
+  ],
+  "t1552.006": [
+    "credential_access"
+  ],
+  "t1048.002": [
+    "exfiltration"
+  ],
+  "t1087.004": [
+    "discovery"
+  ],
+  "t1546.009": [
+    "privilege_escalation",
+    "persistence"
+  ],
+  "t1562.003": [
+    "defense_evasion"
+  ],
+  "t1556.008": [
+    "credential_access",
+    "defense_evasion",
+    "persistence"
+  ],
+  "t1546.003": [
+    "privilege_escalation",
+    "persistence"
+  ],
+  "t1596.004": [
+    "reconnaissance"
+  ],
+  "t1497.002": [
+    "defense_evasion",
+    "discovery"
+  ],
+  "t1496.004": [
+    "impact"
+  ],
+  "t1585.003": [
+    "resource_development"
+  ],
+  "t1590.006": [
+    "reconnaissance"
+  ],
+  "t1598.004": [
+    "reconnaissance"
+  ],
+  "t1003.005": [
+    "credential_access"
+  ],
+  "t1098.004": [
+    "persistence",
+    "privilege_escalation"
+  ],
+  "t1673": [
+    "discovery"
+  ],
+  "t1589.002": [
+    "reconnaissance"
+  ],
+  "t1546.012": [
+    "privilege_escalation",
+    "persistence"
+  ],
+  "t1218.008": [
+    "defense_evasion"
+  ],
+  "t1593.002": [
+    "reconnaissance"
+  ],
+  "t1591.002": [
+    "reconnaissance"
+  ],
+  "t1548.005": [
+    "privilege_escalation",
+    "defense_evasion"
+  ],
+  "t1125": [
+    "collection"
+  ],
+  "t1055.013": [
+    "defense_evasion",
+    "privilege_escalation"
+  ],
+  "t1134.002": [
+    "defense_evasion",
+    "privilege_escalation"
+  ],
+  "t1557.001": [
+    "credential_access",
+    "collection"
+  ],
+  "t1222": [
+    "defense_evasion"
+  ],
+  "t1003.001": [
+    "credential_access"
+  ],
+  "t1176.002": [
+    "persistence"
+  ],
+  "t1595": [
+    "reconnaissance"
+  ],
+  "t1027.016": [
+    "defense_evasion"
+  ],
+  "t1548": [
+    "privilege_escalation",
+    "defense_evasion"
+  ],
+  "t1016": [
+    "discovery"
+  ],
+  "t1548.001": [
+    "privilege_escalation",
+    "defense_evasion"
+  ],
+  "t1547.004": [
+    "persistence",
+    "privilege_escalation"
+  ],
+  "t1021.003": [
+    "lateral_movement"
+  ],
+  "t1110.003": [
+    "credential_access"
+  ],
+  "t1090.002": [
+    "command_and_control"
+  ],
+  "t1056.003": [
+    "collection",
+    "credential_access"
+  ],
+  "t1213.001": [
+    "collection"
+  ],
+  "t1562.007": [
+    "defense_evasion"
+  ],
+  "t1219.001": [
+    "command_and_control"
+  ],
+  "t1036.002": [
+    "defense_evasion"
+  ],
+  "t1588.001": [
+    "resource_development"
+  ],
+  "t1027.017": [
+    "defense_evasion"
+  ],
+  "t1542.002": [
+    "persistence",
+    "defense_evasion"
+  ],
+  "t1070": [
+    "defense_evasion"
+  ],
+  "t1048.001": [
+    "exfiltration"
+  ],
+  "t1137.001": [
+    "persistence"
+  ],
+  "t1583.003": [
+    "resource_development"
+  ],
+  "t1592.004": [
+    "reconnaissance"
+  ],
+  "t1550.003": [
+    "defense_evasion",
+    "lateral_movement"
+  ],
+  "t1609": [
+    "execution"
+  ],
+  "t1083": [
+    "discovery"
+  ],
+  "t1568": [
+    "command_and_control"
+  ],
+  "t1036.004": [
+    "defense_evasion"
+  ],
+  "t1055.004": [
+    "defense_evasion",
+    "privilege_escalation"
+  ],
+  "t1020.001": [
+    "exfiltration"
+  ],
+  "t1647": [
+    "defense_evasion"
+  ],
+  "t1127.003": [
+    "defense_evasion"
+  ],
+  "t1204.005": [
+    "execution"
+  ],
+  "t1578.003": [
+    "defense_evasion"
+  ],
+  "t1593.003": [
+    "reconnaissance"
+  ],
+  "t1574.005": [
+    "persistence",
+    "privilege_escalation",
+    "defense_evasion"
+  ],
+  "t1546.008": [
+    "privilege_escalation",
+    "persistence"
+  ],
+  "t1496.002": [
+    "impact"
+  ],
+  "t1087": [
+    "discovery"
+  ],
+  "t1090": [
+    "command_and_control"
+  ],
+  "t1059": [
+    "execution"
+  ],
+  "t1210": [
+    "lateral_movement"
+  ],
+  "t1562.006": [
+    "defense_evasion"
+  ],
+  "t1136.002": [
+    "persistence"
+  ],
+  "t1564.014": [
+    "defense_evasion"
+  ],
+  "t1589.003": [
+    "reconnaissance"
+  ],
+  "t1677": [
+    "execution"
+  ],
+  "t1482": [
+    "discovery"
+  ],
+  "t1558.001": [
+    "credential_access"
+  ],
+  "t1020": [
+    "exfiltration"
+  ],
+  "t1027.003": [
+    "defense_evasion"
+  ],
+  "t1037.005": [
+    "persistence",
+    "privilege_escalation"
+  ],
+  "t1614.001": [
+    "discovery"
+  ],
+  "t1095": [
+    "command_and_control"
+  ],
+  "t1059.013": [
+    "execution"
+  ],
+  "t1608.003": [
+    "resource_development"
+  ],
+  "t1584.002": [
+    "resource_development"
+  ],
+  "t1671": [
+    "persistence"
+  ],
+  "t1001.003": [
+    "command_and_control"
+  ],
+  "t1012": [
+    "discovery"
+  ],
+  "t1030": [
+    "exfiltration"
+  ],
+  "t1550.004": [
+    "defense_evasion",
+    "lateral_movement"
+  ],
+  "t1078.002": [
+    "defense_evasion",
+    "persistence",
+    "privilege_escalation",
+    "initial_access"
+  ],
+  "t1218.009": [
+    "defense_evasion"
+  ],
+  "t1102.002": [
+    "command_and_control"
+  ],
+  "t1056": [
+    "collection",
+    "credential_access"
+  ],
+  "t1566.004": [
+    "initial_access"
+  ],
+  "t1587.004": [
+    "resource_development"
+  ],
+  "t1593.001": [
+    "reconnaissance"
+  ],
+  "t1213.004": [
+    "collection"
+  ],
+  "t1546.015": [
+    "privilege_escalation",
+    "persistence"
+  ],
+  "t1589.001": [
+    "reconnaissance"
+  ],
+  "t1195.002": [
+    "initial_access"
+  ],
+  "t1036.003": [
+    "defense_evasion"
+  ],
+  "t1546.018": [
+    "persistence",
+    "privilege_escalation"
+  ],
+  "t1203": [
+    "execution"
+  ],
+  "t1595.003": [
+    "reconnaissance"
+  ],
+  "t1667": [
+    "impact"
+  ],
+  "t1562.011": [
+    "defense_evasion"
+  ],
+  "t1137.004": [
+    "persistence"
+  ],
+  "t1573.002": [
+    "command_and_control"
+  ],
+  "t1567.002": [
+    "exfiltration"
+  ],
+  "t1570": [
+    "lateral_movement"
+  ],
+  "t1574.009": [
+    "persistence",
+    "privilege_escalation",
+    "defense_evasion"
+  ],
+  "t1059.006": [
+    "execution"
+  ],
+  "t1070.010": [
+    "defense_evasion"
+  ],
+  "t1591.004": [
+    "reconnaissance"
+  ],
+  "t1132": [
+    "command_and_control"
+  ],
+  "t1546.010": [
+    "privilege_escalation",
+    "persistence"
+  ],
+  "t1598": [
+    "reconnaissance"
+  ],
+  "t1496": [
+    "impact"
+  ],
+  "t1585": [
+    "resource_development"
+  ],
+  "t1588": [
+    "resource_development"
+  ],
+  "t1546.002": [
+    "privilege_escalation",
+    "persistence"
+  ],
+  "t1127.002": [
+    "defense_evasion"
+  ],
+  "t1556.009": [
+    "credential_access",
+    "defense_evasion",
+    "persistence"
+  ],
+  "t1578.002": [
+    "defense_evasion"
+  ],
+  "t1555.006": [
+    "credential_access"
+  ],
+  "t1213.003": [
+    "collection"
+  ],
+  "t1565.002": [
+    "impact"
+  ],
+  "t1003.008": [
+    "credential_access"
+  ],
+  "t1543.001": [
+    "persistence",
+    "privilege_escalation"
+  ],
+  "t1569": [
+    "execution"
+  ],
+  "t1059.003": [
+    "execution"
+  ],
+  "t1656": [
+    "defense_evasion"
+  ],
+  "t1553.004": [
+    "defense_evasion"
+  ],
+  "t1037.003": [
+    "persistence",
+    "privilege_escalation"
+  ],
+  "t1499": [
+    "impact"
+  ],
+  "t1027.004": [
+    "defense_evasion"
+  ],
+  "t1614": [
+    "discovery"
+  ],
+  "t1564.007": [
+    "defense_evasion"
+  ],
+  "t1197": [
+    "defense_evasion",
+    "persistence"
+  ],
+  "t1127.001": [
+    "defense_evasion"
+  ],
+  "t1592.002": [
+    "reconnaissance"
+  ],
+  "t1578.005": [
+    "defense_evasion"
+  ],
+  "t1090.004": [
+    "command_and_control"
+  ],
+  "t1557.002": [
+    "credential_access",
+    "collection"
+  ],
+  "t1562.008": [
+    "defense_evasion"
+  ],
+  "t1518.001": [
+    "discovery"
+  ],
+  "t1564.003": [
+    "defense_evasion"
+  ],
+  "t1110": [
+    "credential_access"
+  ],
+  "t1574.013": [
+    "persistence",
+    "privilege_escalation",
+    "defense_evasion"
+  ],
+  "t1597": [
+    "reconnaissance"
+  ],
+  "t1053.006": [
+    "execution",
+    "persistence",
+    "privilege_escalation"
+  ],
+  "t1566": [
+    "initial_access"
+  ],
+  "t1542.004": [
+    "defense_evasion",
+    "persistence"
+  ],
+  "t1218.001": [
+    "defense_evasion"
+  ],
+  "t1496.001": [
+    "impact"
+  ],
+  "t1070.005": [
+    "defense_evasion"
+  ],
+  "t1090.003": [
+    "command_and_control"
+  ],
+  "t1052.001": [
+    "exfiltration"
+  ],
+  "t1059.004": [
+    "execution"
+  ],
+  "t1137.003": [
+    "persistence"
+  ],
+  "t1219.003": [
+    "command_and_control"
+  ],
+  "t1562.001": [
+    "defense_evasion"
+  ],
+  "t1565": [
+    "impact"
+  ],
+  "t1559": [
+    "execution"
+  ],
+  "t1001": [
+    "command_and_control"
+  ],
+  "t1039": [
+    "collection"
+  ],
+  "t1584.006": [
+    "resource_development"
+  ],
+  "t1593": [
+    "reconnaissance"
+  ],
+  "t1534": [
+    "lateral_movement"
+  ],
+  "t1574.010": [
+    "persistence",
+    "privilege_escalation",
+    "defense_evasion"
+  ],
+  "t1547.001": [
+    "persistence",
+    "privilege_escalation"
+  ],
+  "t1199": [
+    "initial_access"
+  ],
+  "t1136.003": [
+    "persistence"
+  ],
+  "t1069.001": [
+    "discovery"
+  ],
+  "t1601": [
+    "defense_evasion"
+  ],
+  "t1562.013": [
+    "defense_evasion"
+  ],
+  "t1098": [
+    "persistence",
+    "privilege_escalation"
+  ],
+  "t1048": [
+    "exfiltration"
+  ],
+  "t1547.006": [
+    "persistence",
+    "privilege_escalation"
+  ],
+  "t1678": [
+    "defense_evasion"
+  ],
+  "t1056.002": [
+    "collection",
+    "credential_access"
+  ],
+  "t1588.002": [
+    "resource_development"
+  ],
+  "t1564.006": [
+    "defense_evasion"
+  ],
+  "t1027.014": [
+    "defense_evasion"
+  ],
+  "t1201": [
+    "discovery"
+  ],
+  "t1546": [
+    "privilege_escalation",
+    "persistence"
+  ],
+  "t1546.004": [
+    "privilege_escalation",
+    "persistence"
+  ],
+  "t1187": [
+    "credential_access"
+  ],
+  "t1134.005": [
+    "defense_evasion",
+    "privilege_escalation"
+  ],
+  "t1599": [
+    "defense_evasion"
+  ],
+  "t1486": [
+    "impact"
+  ],
+  "t1036.001": [
+    "defense_evasion"
+  ],
+  "t1553": [
+    "defense_evasion"
+  ],
+  "t1548.004": [
+    "privilege_escalation",
+    "defense_evasion"
+  ],
+  "t1592.003": [
+    "reconnaissance"
+  ],
+  "t1573": [
+    "command_and_control"
+  ],
+  "t1547.002": [
+    "persistence",
+    "privilege_escalation"
+  ],
+  "t1218.010": [
+    "defense_evasion"
+  ],
+  "t1567.003": [
+    "exfiltration"
+  ],
+  "t1055.012": [
+    "defense_evasion",
+    "privilege_escalation"
+  ],
+  "t1574": [
+    "persistence",
+    "privilege_escalation",
+    "defense_evasion"
+  ],
+  "t1036.012": [
+    "defense_evasion"
+  ],
+  "t1059.011": [
+    "execution"
+  ],
+  "t1027.005": [
+    "defense_evasion"
+  ],
+  "t1204.003": [
+    "execution"
+  ],
+  "t1543.005": [
+    "persistence",
+    "privilege_escalation"
+  ],
+  "t1078": [
+    "defense_evasion",
+    "persistence",
+    "privilege_escalation",
+    "initial_access"
+  ],
+  "t1571": [
+    "command_and_control"
+  ],
+  "t1585.001": [
+    "resource_development"
+  ],
+  "t1585.002": [
+    "resource_development"
+  ],
+  "t1068": [
+    "privilege_escalation"
+  ],
+  "t1564.009": [
+    "defense_evasion"
+  ],
+  "t1531": [
+    "impact"
+  ],
+  "t1110.004": [
+    "credential_access"
+  ],
+  "t1027": [
+    "defense_evasion"
+  ],
+  "t1556.006": [
+    "credential_access",
+    "defense_evasion",
+    "persistence"
+  ],
+  "t1114.002": [
+    "collection"
+  ],
+  "t1505.004": [
+    "persistence"
+  ],
+  "t1036.008": [
+    "defense_evasion"
+  ],
+  "t1110.002": [
+    "credential_access"
+  ],
+  "t1114.001": [
+    "collection"
+  ],
+  "t1555.001": [
+    "credential_access"
+  ],
+  "t1547": [
+    "persistence",
+    "privilege_escalation"
+  ],
+  "t1003.004": [
+    "credential_access"
+  ],
+  "t1600": [
+    "defense_evasion"
+  ],
+  "t1606.002": [
+    "credential_access"
+  ],
+  "t1565.001": [
+    "impact"
+  ],
+  "t1489": [
+    "impact"
+  ],
+  "t1587.001": [
+    "resource_development"
+  ],
+  "t1652": [
+    "discovery"
+  ],
+  "t1087.002": [
+    "discovery"
+  ],
+  "t1547.014": [
+    "persistence",
+    "privilege_escalation"
+  ],
+  "t1564": [
+    "defense_evasion"
+  ],
+  "t1559.002": [
+    "execution"
+  ],
+  "t1204.002": [
+    "execution"
+  ],
+  "t1542.003": [
+    "persistence",
+    "defense_evasion"
+  ],
+  "t1499.003": [
+    "impact"
+  ],
+  "t1195.001": [
+    "initial_access"
+  ],
+  "t1588.004": [
+    "resource_development"
+  ],
+  "t1583.002": [
+    "resource_development"
+  ],
+  "t1561": [
+    "impact"
+  ],
+  "t1071.004": [
+    "command_and_control"
+  ],
+  "t1552.005": [
+    "credential_access"
+  ],
+  "t1555.002": [
+    "credential_access"
+  ],
+  "t1615": [
+    "discovery"
+  ],
+  "t1591.003": [
+    "reconnaissance"
+  ],
+  "t1025": [
+    "collection"
+  ],
+  "t1218.013": [
+    "defense_evasion"
+  ],
+  "t1074.001": [
+    "collection"
+  ],
+  "t1036.005": [
+    "defense_evasion"
+  ],
+  "t1587.003": [
+    "resource_development"
+  ],
+  "t1566.002": [
+    "initial_access"
+  ],
+  "t1070.002": [
+    "defense_evasion"
+  ],
+  "t1499.004": [
+    "impact"
+  ],
+  "t1137": [
+    "persistence"
+  ],
+  "t1218.004": [
+    "defense_evasion"
+  ],
+  "t1598.003": [
+    "reconnaissance"
+  ],
+  "t1021.004": [
+    "lateral_movement"
+  ],
+  "t1098.003": [
+    "persistence",
+    "privilege_escalation"
+  ],
+  "t1547.012": [
+    "persistence",
+    "privilege_escalation"
+  ],
+  "t1588.006": [
+    "resource_development"
+  ],
+  "t1566.001": [
+    "initial_access"
+  ],
+  "t1027.008": [
+    "defense_evasion"
+  ],
+  "t1559.001": [
+    "execution"
+  ],
+  "t1574.001": [
+    "persistence",
+    "privilege_escalation",
+    "defense_evasion"
+  ],
+  "t1119": [
+    "collection"
+  ],
+  "t1115": [
+    "collection"
+  ],
+  "t1003.007": [
+    "credential_access"
+  ],
+  "t1583.005": [
+    "resource_development"
+  ],
+  "t1176.001": [
+    "persistence"
+  ],
+  "t1071.005": [
+    "command_and_control"
+  ],
+  "t1592.001": [
+    "reconnaissance"
+  ],
+  "t1080": [
+    "lateral_movement"
+  ],
+  "t1484.002": [
+    "defense_evasion",
+    "privilege_escalation"
+  ],
+  "t1213.006": [
+    "collection"
+  ],
+  "t1573.001": [
+    "command_and_control"
+  ],
+  "t1087.001": [
+    "discovery"
+  ],
+  "t1586.001": [
+    "resource_development"
+  ],
+  "t1596.001": [
+    "reconnaissance"
+  ],
+  "t1562.009": [
+    "defense_evasion"
+  ],
+  "t1542.005": [
+    "defense_evasion",
+    "persistence"
+  ],
+  "t1543.003": [
+    "persistence",
+    "privilege_escalation"
+  ],
+  "t1568.001": [
+    "command_and_control"
+  ],
+  "t1497.001": [
+    "defense_evasion",
+    "discovery"
+  ],
+  "t1053.003": [
+    "execution",
+    "persistence",
+    "privilege_escalation"
+  ],
+  "t1069.002": [
+    "discovery"
+  ],
+  "t1110.001": [
+    "credential_access"
+  ],
+  "t1027.009": [
+    "defense_evasion"
+  ],
+  "t1556.003": [
+    "credential_access",
+    "defense_evasion",
+    "persistence"
+  ],
+  "t1578.004": [
+    "defense_evasion"
+  ],
+  "t1592": [
+    "reconnaissance"
+  ],
+  "t1596.003": [
+    "reconnaissance"
+  ],
+  "t1056.001": [
+    "collection",
+    "credential_access"
+  ],
+  "t1564.012": [
+    "defense_evasion"
+  ],
+  "t1222.002": [
+    "defense_evasion"
+  ],
+  "t1132.001": [
+    "command_and_control"
+  ],
+  "t1216.001": [
+    "defense_evasion"
+  ],
+  "t1597.002": [
+    "reconnaissance"
+  ],
+  "t1003": [
+    "credential_access"
+  ],
+  "t1129": [
+    "execution"
+  ],
+  "t1602": [
+    "collection"
+  ],
+  "t1561.002": [
+    "impact"
+  ],
+  "t1498.001": [
+    "impact"
+  ],
+  "t1574.007": [
+    "persistence",
+    "privilege_escalation",
+    "defense_evasion"
+  ],
+  "t1213.002": [
+    "collection"
+  ],
+  "t1053.005": [
+    "execution",
+    "persistence",
+    "privilege_escalation"
+  ],
+  "t1205.002": [
+    "defense_evasion",
+    "persistence",
+    "command_and_control"
+  ],
+  "t1560.001": [
+    "collection"
+  ],
+  "t1021.005": [
+    "lateral_movement"
+  ],
+  "t1047": [
+    "execution"
+  ],
+  "t1113": [
+    "collection"
+  ],
+  "t1027.011": [
+    "defense_evasion"
+  ],
+  "t1006": [
+    "defense_evasion"
+  ],
+  "t1037": [
+    "persistence",
+    "privilege_escalation"
+  ],
+  "t1557": [
+    "credential_access",
+    "collection"
+  ],
+  "t1033": [
+    "discovery"
+  ],
+  "t1583": [
+    "resource_development"
+  ],
+  "t1218.011": [
+    "defense_evasion"
+  ],
+  "t1613": [
+    "discovery"
+  ],
+  "t1583.007": [
+    "resource_development"
+  ],
+  "t1578": [
+    "defense_evasion"
+  ],
+  "t1539": [
+    "credential_access"
+  ],
+  "t1053.007": [
+    "execution",
+    "persistence",
+    "privilege_escalation"
+  ],
+  "t1568.002": [
+    "command_and_control"
+  ],
+  "t1036.007": [
+    "defense_evasion"
+  ],
+  "t1548.002": [
+    "privilege_escalation",
+    "defense_evasion"
+  ],
+  "t1496.003": [
+    "impact"
+  ],
+  "t1016.001": [
+    "discovery"
+  ],
+  "t1548.003": [
+    "privilege_escalation",
+    "defense_evasion"
+  ],
+  "t1560.003": [
+    "collection"
+  ],
+  "t1546.006": [
+    "privilege_escalation",
+    "persistence"
+  ],
+  "t1584.008": [
+    "resource_development"
+  ],
+  "t1583.008": [
+    "resource_development"
+  ],
+  "t1069": [
+    "discovery"
+  ],
+  "t1114": [
+    "collection"
+  ],
+  "t1003.002": [
+    "credential_access"
+  ],
+  "t1596.002": [
+    "reconnaissance"
+  ],
+  "t1542.001": [
+    "persistence",
+    "defense_evasion"
+  ],
+  "t1594": [
+    "reconnaissance"
+  ],
+  "t1069.003": [
+    "discovery"
+  ],
+  "t1574.011": [
+    "persistence",
+    "privilege_escalation",
+    "defense_evasion"
+  ],
+  "t1546.013": [
+    "privilege_escalation",
+    "persistence"
+  ],
+  "t1588.007": [
+    "resource_development"
+  ],
+  "t1666": [
+    "defense_evasion"
+  ],
+  "t1564.008": [
+    "defense_evasion"
+  ],
+  "t1491.002": [
+    "impact"
+  ],
+  "t1027.013": [
+    "defense_evasion"
+  ],
+  "t1590.005": [
+    "reconnaissance"
+  ],
+  "t1499.001": [
+    "impact"
+  ],
+  "t1014": [
+    "defense_evasion"
+  ],
+  "t1555.005": [
+    "credential_access"
+  ],
+  "t1059.007": [
+    "execution"
+  ],
+  "t1590.002": [
+    "reconnaissance"
+  ],
+  "t1485.001": [
+    "impact"
+  ],
+  "t1123": [
+    "collection"
+  ],
+  "t1543": [
+    "persistence",
+    "privilege_escalation"
+  ],
+  "t1133": [
+    "persistence",
+    "initial_access"
+  ],
+  "t1602.002": [
+    "collection"
+  ],
+  "t1599.001": [
+    "defense_evasion"
+  ],
+  "t1608.002": [
+    "resource_development"
+  ],
+  "t1547.005": [
+    "persistence",
+    "privilege_escalation"
+  ],
+  "t1036.011": [
+    "defense_evasion"
+  ],
+  "t1550": [
+    "defense_evasion",
+    "lateral_movement"
+  ],
+  "t1597.001": [
+    "reconnaissance"
+  ],
+  "t1011": [
+    "exfiltration"
+  ],
+  "t1218.002": [
+    "defense_evasion"
+  ],
+  "t1589": [
+    "reconnaissance"
+  ],
+  "t1562.004": [
+    "defense_evasion"
+  ],
+  "t1560": [
+    "collection"
+  ],
+  "t1553.003": [
+    "defense_evasion"
+  ],
+  "t1185": [
+    "collection"
+  ],
+  "t1021": [
+    "lateral_movement"
+  ],
+  "t1016.002": [
+    "discovery"
+  ],
+  "t1480.002": [
+    "defense_evasion"
+  ],
+  "t1564.011": [
+    "defense_evasion"
+  ],
+  "t1611": [
+    "privilege_escalation"
+  ],
+  "t1518.002": [
+    "discovery"
+  ],
+  "t1547.009": [
+    "persistence",
+    "privilege_escalation"
+  ],
+  "t1010": [
+    "discovery"
+  ],
+  "t1569.003": [
+    "execution"
+  ],
+  "t1087.003": [
+    "discovery"
+  ],
+  "t1071.003": [
+    "command_and_control"
+  ],
+  "t1497.003": [
+    "defense_evasion",
+    "discovery"
+  ],
+  "t1218.003": [
+    "defense_evasion"
+  ],
+  "t1563.001": [
+    "lateral_movement"
+  ],
+  "t1562.002": [
+    "defense_evasion"
+  ],
+  "t1029": [
+    "exfiltration"
+  ],
+  "t1021.002": [
+    "lateral_movement"
+  ],
+  "t1525": [
+    "persistence"
+  ],
+  "t1572": [
+    "command_and_control"
+  ],
+  "t1547.003": [
+    "persistence",
+    "privilege_escalation"
+  ],
+  "t1564.013": [
+    "defense_evasion"
+  ],
+  "t1027.001": [
+    "defense_evasion"
+  ],
+  "t1505.003": [
+    "persistence"
+  ],
+  "t1484.001": [
+    "defense_evasion",
+    "privilege_escalation"
+  ],
+  "t1217": [
+    "discovery"
+  ],
+  "t1552.004": [
+    "credential_access"
+  ],
+  "t1583.004": [
+    "resource_development"
+  ],
+  "t1021.006": [
+    "lateral_movement"
+  ],
+  "t1011.001": [
+    "exfiltration"
+  ],
+  "t1078.001": [
+    "defense_evasion",
+    "persistence",
+    "privilege_escalation",
+    "initial_access"
+  ],
+  "t1563": [
+    "lateral_movement"
+  ],
+  "t1546.005": [
+    "privilege_escalation",
+    "persistence"
+  ],
+  "t1574.006": [
+    "persistence",
+    "privilege_escalation",
+    "defense_evasion"
+  ],
+  "t1136.001": [
+    "persistence"
+  ],
+  "t1681": [
+    "reconnaissance"
+  ],
+  "t1674": [
+    "execution"
+  ],
+  "t1092": [
+    "command_and_control"
+  ],
+  "t1070.001": [
+    "defense_evasion"
+  ],
+  "t1556.007": [
+    "credential_access",
+    "defense_evasion",
+    "persistence"
+  ],
+  "t1595.002": [
+    "reconnaissance"
+  ],
+  "t1059.009": [
+    "execution"
+  ],
+  "t1596": [
+    "reconnaissance"
+  ],
+  "t1218.015": [
+    "defense_evasion"
+  ],
+  "t1562.012": [
+    "defense_evasion"
+  ],
+  "t1207": [
+    "defense_evasion"
+  ],
+  "t1553.006": [
+    "defense_evasion"
+  ],
+  "t1610": [
+    "defense_evasion",
+    "execution"
+  ],
+  "t1620": [
+    "defense_evasion"
+  ],
+  "t1112": [
+    "defense_evasion",
+    "persistence"
+  ],
+  "t1543.004": [
+    "persistence",
+    "privilege_escalation"
+  ],
+  "t1580": [
+    "discovery"
+  ],
+  "t1555.003": [
+    "credential_access"
+  ],
+  "t1574.008": [
+    "persistence",
+    "privilege_escalation",
+    "defense_evasion"
+  ],
+  "t1491": [
+    "impact"
+  ],
+  "t1535": [
+    "defense_evasion"
+  ],
+  "t1557.003": [
+    "credential_access",
+    "collection"
+  ],
+  "t1059.002": [
+    "execution"
+  ],
+  "t1574.014": [
+    "persistence",
+    "privilege_escalation",
+    "defense_evasion"
+  ],
+  "t1074.002": [
+    "collection"
+  ],
+  "t1098.006": [
+    "persistence",
+    "privilege_escalation"
+  ],
+  "t1053": [
+    "execution",
+    "persistence",
+    "privilege_escalation"
+  ],
+  "t1218.007": [
+    "defense_evasion"
+  ],
+  "t1590.003": [
+    "reconnaissance"
+  ],
+  "t1498.002": [
+    "impact"
+  ],
+  "t1556.002": [
+    "credential_access",
+    "defense_evasion",
+    "persistence"
+  ],
+  "t1505.005": [
+    "persistence"
+  ],
+  "t1071": [
+    "command_and_control"
+  ],
+  "t1176": [
+    "persistence"
+  ],
+  "t1499.002": [
+    "impact"
+  ],
+  "t1195.003": [
+    "initial_access"
+  ],
+  "t1106": [
+    "execution"
+  ],
+  "t1558.005": [
+    "credential_access"
+  ],
+  "t1070.007": [
+    "defense_evasion"
+  ],
+  "t1558.004": [
+    "credential_access"
+  ],
+  "t1584.003": [
+    "resource_development"
+  ],
+  "t1059.010": [
+    "execution"
+  ],
+  "t1552.002": [
+    "credential_access"
+  ],
+  "t1553.001": [
+    "defense_evasion"
+  ],
+  "t1675": [
+    "execution"
+  ],
+  "t1608.004": [
+    "resource_development"
+  ],
+  "t1007": [
+    "discovery"
+  ],
+  "t1040": [
+    "credential_access",
+    "discovery"
+  ],
+  "t1553.002": [
+    "defense_evasion"
+  ],
+  "t1530": [
+    "collection"
+  ],
+  "t1565.003": [
+    "impact"
+  ],
+  "t1600.001": [
+    "defense_evasion"
+  ],
+  "t1135": [
+    "discovery"
+  ],
+  "t1120": [
+    "discovery"
+  ],
+  "t1036.009": [
+    "defense_evasion"
+  ],
+  "t1590.004": [
+    "reconnaissance"
+  ],
+  "t1587.002": [
+    "resource_development"
+  ],
+  "t1222.001": [
+    "defense_evasion"
+  ],
+  "t1137.006": [
+    "persistence"
+  ],
+  "t1505.002": [
+    "persistence"
+  ],
+  "t1082": [
+    "discovery"
+  ],
+  "t1567.004": [
+    "exfiltration"
+  ],
+  "t1055.003": [
+    "defense_evasion",
+    "privilege_escalation"
+  ],
+  "t1036": [
+    "defense_evasion"
+  ],
+  "t1546.011": [
+    "privilege_escalation",
+    "persistence"
+  ],
+  "t1552": [
+    "credential_access"
+  ],
+  "t1547.010": [
+    "persistence",
+    "privilege_escalation"
+  ],
+  "t1070.008": [
+    "defense_evasion"
+  ],
+  "t1037.002": [
+    "persistence",
+    "privilege_escalation"
+  ],
+  "t1659": [
+    "initial_access",
+    "command_and_control"
+  ],
+  "t1055": [
+    "defense_evasion",
+    "privilege_escalation"
+  ],
+  "t1560.002": [
+    "collection"
+  ],
+  "t1205": [
+    "defense_evasion",
+    "persistence",
+    "command_and_control"
+  ],
+  "t1021.008": [
+    "lateral_movement"
+  ],
+  "t1218": [
+    "defense_evasion"
+  ],
+  "t1070.006": [
+    "defense_evasion"
+  ],
+  "t1557.004": [
+    "credential_access",
+    "collection"
+  ],
+  "t1586.002": [
+    "resource_development"
+  ],
+  "t1070.003": [
+    "defense_evasion"
+  ],
+  "t1202": [
+    "defense_evasion"
+  ],
+  "t1091": [
+    "lateral_movement",
+    "initial_access"
+  ],
+  "t1005": [
+    "collection"
+  ],
+  "t1140": [
+    "defense_evasion"
+  ],
+  "t1137.005": [
+    "persistence"
+  ],
+  "t1562": [
+    "defense_evasion"
+  ],
+  "t1586.003": [
+    "resource_development"
+  ],
+  "t1098.007": [
+    "persistence",
+    "privilege_escalation"
+  ],
+  "t1608.001": [
+    "resource_development"
+  ],
+  "t1195": [
+    "initial_access"
+  ],
+  "t1190": [
+    "initial_access"
+  ],
+  "t1558": [
+    "credential_access"
+  ],
+  "t1555": [
+    "credential_access"
+  ],
+  "t1567": [
+    "exfiltration"
+  ],
+  "t1219": [
+    "command_and_control"
+  ],
+  "t1583.001": [
+    "resource_development"
+  ],
+  "t1055.009": [
+    "defense_evasion",
+    "privilege_escalation"
+  ],
+  "t1566.003": [
+    "initial_access"
+  ],
+  "t1055.001": [
+    "defense_evasion",
+    "privilege_escalation"
+  ],
+  "t1588.005": [
+    "resource_development"
+  ],
+  "t1556": [
+    "credential_access",
+    "defense_evasion",
+    "persistence"
+  ],
+  "t1546.017": [
+    "persistence",
+    "privilege_escalation"
+  ],
+  "t1056.004": [
+    "collection",
+    "credential_access"
+  ],
+  "t1495": [
+    "impact"
+  ],
+  "t1490": [
+    "impact"
+  ],
+  "t1546.007": [
+    "privilege_escalation",
+    "persistence"
+  ],
+  "t1053.002": [
+    "execution",
+    "persistence",
+    "privilege_escalation"
+  ],
+  "t1090.001": [
+    "command_and_control"
+  ],
+  "t1216": [
+    "defense_evasion"
+  ],
+  "t1102.001": [
+    "command_and_control"
+  ],
+  "t1001.001": [
+    "command_and_control"
+  ],
+  "t1598.001": [
+    "reconnaissance"
+  ],
+  "t1505.006": [
+    "persistence"
+  ],
+  "t1552.007": [
+    "credential_access"
+  ],
+  "t1569.002": [
+    "execution"
+  ],
+  "t1591.001": [
+    "reconnaissance"
+  ],
+  "t1137.002": [
+    "persistence"
+  ],
+  "t1587": [
+    "resource_development"
+  ],
+  "t1003.003": [
+    "credential_access"
+  ],
+  "t1602.001": [
+    "collection"
+  ],
+  "t1001.002": [
+    "command_and_control"
+  ],
+  "t1204.001": [
+    "execution"
+  ],
+  "t1550.001": [
+    "defense_evasion",
+    "lateral_movement"
+  ],
+  "t1547.008": [
+    "persistence",
+    "privilege_escalation"
+  ],
+  "t1584.001": [
+    "resource_development"
+  ],
+  "t1078.004": [
+    "defense_evasion",
+    "persistence",
+    "privilege_escalation",
+    "initial_access"
+  ],
+  "t1480.001": [
+    "defense_evasion"
+  ],
+  "t1008": [
+    "command_and_control"
+  ],
+  "t1680": [
+    "discovery"
+  ],
+  "t1564.004": [
+    "defense_evasion"
+  ],
+  "t1558.003": [
+    "credential_access"
+  ],
+  "t1003.006": [
+    "credential_access"
+  ],
+  "t1124": [
+    "discovery"
+  ],
+  "t1211": [
+    "defense_evasion"
+  ],
+  "t1505.001": [
+    "persistence"
+  ],
+  "t1556.004": [
+    "credential_access",
+    "defense_evasion",
+    "persistence"
+  ],
+  "t1561.001": [
+    "impact"
+  ],
+  "t1213.005": [
+    "collection"
+  ],
+  "t1048.003": [
+    "exfiltration"
+  ],
+  "t1027.015": [
+    "defense_evasion"
+  ],
+  "t1574.004": [
+    "persistence",
+    "privilege_escalation",
+    "defense_evasion"
+  ],
+  "t1601.002": [
+    "defense_evasion"
+  ],
+  "t1078.003": [
+    "defense_evasion",
+    "persistence",
+    "privilege_escalation",
+    "initial_access"
+  ],
+  "t1669": [
+    "initial_access"
+  ],
+  "t1578.001": [
+    "defense_evasion"
+  ],
+  "t1127": [
+    "defense_evasion"
+  ],
+  "t1529": [
+    "impact"
+  ],
+  "t1218.014": [
+    "defense_evasion"
+  ],
+  "t1564.010": [
+    "defense_evasion"
+  ],
+  "t1574.012": [
+    "persistence",
+    "privilege_escalation",
+    "defense_evasion"
+  ],
+  "t1221": [
+    "defense_evasion"
+  ],
+  "t1027.010": [
+    "defense_evasion"
+  ],
+  "t1070.004": [
+    "defense_evasion"
+  ],
+  "t1189": [
+    "initial_access"
+  ],
+  "t1498": [
+    "impact"
+  ],
+  "t1651": [
+    "execution"
+  ],
+  "t1546.016": [
+    "privilege_escalation",
+    "persistence"
+  ],
+  "t1595.001": [
+    "reconnaissance"
+  ],
+  "t1556.005": [
+    "credential_access",
+    "defense_evasion",
+    "persistence"
+  ],
+  "t1037.004": [
+    "persistence",
+    "privilege_escalation"
+  ],
+  "t1134": [
+    "defense_evasion",
+    "privilege_escalation"
+  ],
+  "t1111": [
+    "credential_access"
+  ],
+  "t1027.002": [
+    "defense_evasion"
+  ],
+  "t1584.007": [
+    "resource_development"
+  ],
+  "t1071.001": [
+    "command_and_control"
+  ],
+  "t1059.005": [
+    "execution"
+  ],
+  "t1564.005": [
+    "defense_evasion"
+  ],
+  "t1650": [
+    "resource_development"
+  ],
+  "t1601.001": [
+    "defense_evasion"
+  ],
+  "t1558.002": [
+    "credential_access"
+  ],
+  "t1213": [
+    "collection"
+  ],
+  "t1070.009": [
+    "defense_evasion"
+  ],
+  "t1059.012": [
+    "execution"
+  ],
+  "t1555.004": [
+    "credential_access"
+  ],
+  "t1036.010": [
+    "defense_evasion"
+  ],
+  "t1543.002": [
+    "persistence",
+    "privilege_escalation"
+  ],
+  "t1200": [
+    "initial_access"
+  ],
+  "t1219.002": [
+    "command_and_control"
+  ],
+  "t1505": [
+    "persistence"
+  ],
+  "t1485": [
+    "impact"
+  ],
+  "t1132.002": [
+    "command_and_control"
+  ],
+  "t1556.001": [
+    "credential_access",
+    "defense_evasion",
+    "persistence"
+  ],
+  "t1537": [
+    "exfiltration"
+  ],
+  "t1027.006": [
+    "defense_evasion"
+  ],
+  "t1055.008": [
+    "defense_evasion",
+    "privilege_escalation"
+  ],
+  "t1105": [
+    "command_and_control"
+  ],
+  "t1216.002": [
+    "defense_evasion"
+  ],
+  "t1098.002": [
+    "persistence",
+    "privilege_escalation"
+  ],
+  "t1588.003": [
+    "resource_development"
+  ],
+  "t1648": [
+    "execution"
+  ],
+  "t1548.006": [
+    "defense_evasion",
+    "privilege_escalation"
+  ],
+  "t1052": [
+    "exfiltration"
+  ],
+  "t1653": [
+    "persistence"
+  ],
+  "t1027.007": [
+    "defense_evasion"
+  ],
+  "t1021.001": [
+    "lateral_movement"
+  ],
+  "t1037.001": [
+    "persistence",
+    "privilege_escalation"
+  ],
+  "t1055.015": [
+    "defense_evasion",
+    "privilege_escalation"
+  ],
+  "t1665": [
+    "command_and_control"
+  ],
+  "t1484": [
+    "defense_evasion",
+    "privilege_escalation"
+  ],
+  "t1220": [
+    "defense_evasion"
+  ],
+  "t1596.005": [
+    "reconnaissance"
+  ],
+  "t1564.001": [
+    "defense_evasion"
+  ],
+  "t1046": [
+    "discovery"
+  ],
+  "t1668": [
+    "persistence"
+  ],
+  "t1563.002": [
+    "lateral_movement"
+  ],
+  "t1136": [
+    "persistence"
+  ],
+  "t1547.013": [
+    "persistence",
+    "privilege_escalation"
+  ],
+  "t1584.004": [
+    "resource_development"
+  ],
+  "t1672": [
+    "defense_evasion"
+  ],
+  "t1526": [
+    "discovery"
+  ],
+  "t1204.004": [
+    "execution"
+  ],
+  "t1018": [
+    "discovery"
+  ],
+  "t1590.001": [
+    "reconnaissance"
+  ],
+  "t1518": [
+    "discovery"
+  ],
+  "t1538": [
+    "discovery"
+  ],
+  "t1055.005": [
+    "defense_evasion",
+    "privilege_escalation"
+  ],
+  "t1622": [
+    "defense_evasion",
+    "discovery"
+  ],
+  "t1036.006": [
+    "defense_evasion"
+  ],
+  "t1547.007": [
+    "persistence",
+    "privilege_escalation"
+  ],
+  "t1608.006": [
+    "resource_development"
+  ],
+  "t1550.002": [
+    "defense_evasion",
+    "lateral_movement"
+  ],
+  "t1603": [
+    "execution",
+    "persistence"
+  ],
+  "t1430.002": [
+    "collection",
+    "discovery"
+  ],
+  "t1474": [
+    "initial_access"
+  ],
+  "t1630": [
+    "defense_evasion"
+  ],
+  "t1630.001": [
+    "defense_evasion"
+  ],
+  "t1663": [
+    "command_and_control"
+  ],
+  "t1626": [
+    "privilege_escalation"
+  ],
+  "t1638": [
+    "collection"
+  ],
+  "t1636.001": [
+    "collection"
+  ],
+  "t1676": [
+    "collection",
+    "persistence"
+  ],
+  "t1451": [
+    "initial_access"
+  ],
+  "t1417": [
+    "collection",
+    "credential_access"
+  ],
+  "t1643": [
+    "impact"
+  ],
+  "t1630.003": [
+    "defense_evasion"
+  ],
+  "t1630.002": [
+    "defense_evasion"
+  ],
+  "t1629.002": [
+    "defense_evasion"
+  ],
+  "t1417.001": [
+    "collection",
+    "credential_access"
+  ],
+  "t1582": [
+    "impact"
+  ],
+  "t1631": [
+    "defense_evasion",
+    "privilege_escalation"
+  ],
+  "t1634.001": [
+    "credential_access"
+  ],
+  "t1670": [
+    "defense_evasion"
+  ],
+  "t1521.001": [
+    "command_and_control"
+  ],
+  "t1481.002": [
+    "command_and_control"
+  ],
+  "t1509": [
+    "command_and_control"
+  ],
+  "t1474.003": [
+    "initial_access"
+  ],
+  "t1481.001": [
+    "command_and_control"
+  ],
+  "t1430": [
+    "collection",
+    "discovery"
+  ],
+  "t1626.001": [
+    "privilege_escalation"
+  ],
+  "t1430.001": [
+    "collection",
+    "discovery"
+  ],
+  "t1662": [
+    "impact"
+  ],
+  "t1521.003": [
+    "command_and_control"
+  ],
+  "t1422": [
+    "discovery"
+  ],
+  "t1512": [
+    "collection"
+  ],
+  "t1481.003": [
+    "command_and_control"
+  ],
+  "t1471": [
+    "impact"
+  ],
+  "t1629.001": [
+    "defense_evasion"
+  ],
+  "t1421": [
+    "discovery"
+  ],
+  "t1660": [
+    "initial_access"
+  ],
+  "t1624": [
+    "persistence"
+  ],
+  "t1461": [
+    "initial_access"
+  ],
+  "t1636.003": [
+    "collection"
+  ],
+  "t1533": [
+    "collection"
+  ],
+  "t1640": [
+    "impact"
+  ],
+  "t1426": [
+    "discovery"
+  ],
+  "t1532": [
+    "collection"
+  ],
+  "t1422.002": [
+    "discovery"
+  ],
+  "t1474.002": [
+    "initial_access"
+  ],
+  "t1414": [
+    "collection",
+    "credential_access"
+  ],
+  "t1641": [
+    "impact"
+  ],
+  "t1636.004": [
+    "collection"
+  ],
+  "t1481": [
+    "command_and_control"
+  ],
+  "t1625.001": [
+    "persistence"
+  ],
+  "t1634": [
+    "credential_access"
+  ],
+  "t1617": [
+    "defense_evasion"
+  ],
+  "t1420": [
+    "discovery"
+  ],
+  "t1406": [
+    "defense_evasion"
+  ],
+  "t1516": [
+    "defense_evasion",
+    "impact"
+  ],
+  "t1464": [
+    "impact"
+  ],
+  "t1577": [
+    "persistence"
+  ],
+  "t1404": [
+    "privilege_escalation"
+  ],
+  "t1623": [
+    "execution"
+  ],
+  "t1629.003": [
+    "defense_evasion"
+  ],
+  "t1544": [
+    "command_and_control"
+  ],
+  "t1637": [
+    "command_and_control"
+  ],
+  "t1423": [
+    "discovery"
+  ],
+  "t1646": [
+    "exfiltration"
+  ],
+  "t1636.005": [
+    "collection"
+  ],
+  "t1616": [
+    "collection",
+    "impact",
+    "command_and_control"
+  ],
+  "t1639.001": [
+    "exfiltration"
+  ],
+  "t1624.001": [
+    "persistence"
+  ],
+  "t1517": [
+    "collection",
+    "credential_access"
+  ],
+  "t1639": [
+    "exfiltration"
+  ],
+  "t1631.001": [
+    "defense_evasion",
+    "privilege_escalation"
+  ],
+  "t1655.001": [
+    "defense_evasion"
+  ],
+  "t1636": [
+    "collection"
+  ],
+  "t1521.002": [
+    "command_and_control"
+  ],
+  "t1418": [
+    "discovery"
+  ],
+  "t1424": [
+    "discovery"
+  ],
+  "t1636.002": [
+    "collection"
+  ],
+  "t1418.001": [
+    "discovery"
+  ],
+  "t1422.001": [
+    "discovery"
+  ],
+  "t1629": [
+    "defense_evasion"
+  ],
+  "t1453": [
+    "collection",
+    "credential_access"
+  ],
+  "t1428": [
+    "lateral_movement"
+  ],
+  "t1437.001": [
+    "command_and_control"
+  ],
+  "t1635": [
+    "credential_access"
+  ],
+  "t1628.002": [
+    "defense_evasion"
+  ],
+  "t1633": [
+    "defense_evasion"
+  ],
+  "t1661": [
+    "initial_access",
+    "defense_evasion"
+  ],
+  "t1409": [
+    "collection"
+  ],
+  "t1429": [
+    "collection"
+  ],
+  "t1625": [
+    "persistence"
+  ],
+  "t1623.001": [
+    "execution"
+  ],
+  "t1437": [
+    "command_and_control"
+  ],
+  "t1407": [
+    "defense_evasion"
+  ],
+  "t1664": [
+    "initial_access"
+  ],
+  "t1633.001": [
+    "defense_evasion"
+  ],
+  "t1458": [
+    "initial_access",
+    "lateral_movement"
+  ],
+  "t1513": [
+    "collection"
+  ],
+  "t1641.001": [
+    "impact"
+  ],
+  "t1474.001": [
+    "initial_access"
+  ],
+  "t1635.001": [
+    "credential_access"
+  ],
+  "t1632": [
+    "defense_evasion"
+  ],
+  "t1575": [
+    "defense_evasion",
+    "execution"
+  ],
+  "t1398": [
+    "persistence"
+  ],
+  "t1627": [
+    "defense_evasion"
+  ],
+  "t1417.002": [
+    "credential_access",
+    "collection"
+  ],
+  "t1645": [
+    "persistence"
+  ],
+  "t1406.002": [
+    "defense_evasion"
+  ],
+  "t1627.001": [
+    "defense_evasion"
+  ],
+  "t1658": [
+    "execution"
+  ],
+  "t1604": [
+    "defense_evasion"
+  ],
+  "t1541": [
+    "defense_evasion",
+    "persistence"
+  ],
+  "t1456": [
+    "initial_access"
+  ],
+  "t1637.001": [
+    "command_and_control"
+  ],
+  "t1628.003": [
+    "defense_evasion"
+  ],
+  "t1642": [
+    "impact"
+  ],
+  "t1644": [
+    "command_and_control"
+  ],
+  "t1521": [
+    "command_and_control"
+  ],
+  "t1628.001": [
+    "defense_evasion"
+  ],
+  "t1655": [
+    "defense_evasion"
+  ],
+  "t1406.001": [
+    "defense_evasion"
+  ],
+  "t1628": [
+    "defense_evasion"
+  ],
+  "t1632.001": [
+    "defense_evasion"
+  ],
+  "t0849": [
+    "evasion"
+  ],
+  "t0813": [
+    "impact"
+  ],
+  "t0886": [
+    "initial_access",
+    "lateral_movement"
+  ],
+  "t0869": [
+    "command_and_control"
+  ],
+  "t0884": [
+    "command_and_control"
+  ],
+  "t0846": [
+    "discovery"
+  ],
+  "t0890": [
+    "privilege_escalation"
+  ],
+  "t0859": [
+    "persistence",
+    "lateral_movement"
+  ],
+  "t0891": [
+    "lateral_movement",
+    "persistence"
+  ],
+  "t0852": [
+    "collection"
+  ],
+  "t0847": [
+    "initial_access"
+  ],
+  "t0843": [
+    "lateral_movement"
+  ],
+  "t0838": [
+    "inhibit_response_function"
+  ],
+  "t0857": [
+    "persistence",
+    "inhibit_response_function"
+  ],
+  "t0882": [
+    "impact"
+  ],
+  "t0826": [
+    "impact"
+  ],
+  "t0834": [
+    "execution"
+  ],
+  "t0848": [
+    "initial_access"
+  ],
+  "t0823": [
+    "execution"
+  ],
+  "t0874": [
+    "execution",
+    "privilege_escalation"
+  ],
+  "t0827": [
+    "impact"
+  ],
+  "t0820": [
+    "evasion"
+  ],
+  "t0830": [
+    "collection"
+  ],
+  "t0889": [
+    "persistence"
+  ],
+  "t0892": [
+    "inhibit_response_function"
+  ],
+  "t0893": [
+    "collection"
+  ],
+  "t0883": [
+    "initial_access"
+  ],
+  "t0839": [
+    "persistence",
+    "impair_process_control"
+  ],
+  "t0867": [
+    "lateral_movement"
+  ],
+  "t0840": [
+    "discovery"
+  ],
+  "t0873": [
+    "persistence"
+  ],
+  "t0885": [
+    "command_and_control"
+  ],
+  "t0861": [
+    "collection"
+  ],
+  "t0864": [
+    "initial_access"
+  ],
+  "t0811": [
+    "collection"
+  ],
+  "t0819": [
+    "initial_access"
+  ],
+  "t0845": [
+    "collection"
+  ],
+  "t0888": [
+    "discovery"
+  ],
+  "t0853": [
+    "execution"
+  ],
+  "t0801": [
+    "collection"
+  ],
+  "t0837": [
+    "impact"
+  ],
+  "t0868": [
+    "collection"
+  ],
+  "t0878": [
+    "inhibit_response_function"
+  ],
+  "t0858": [
+    "execution",
+    "evasion"
+  ],
+  "t0860": [
+    "initial_access"
+  ],
+  "t0863": [
+    "execution"
+  ],
+  "t0816": [
+    "inhibit_response_function"
+  ],
+  "t0835": [
+    "inhibit_response_function"
+  ],
+  "t0807": [
+    "execution"
+  ],
+  "t0894": [
+    "evasion"
+  ],
+  "t0805": [
+    "inhibit_response_function"
+  ],
+  "t0814": [
+    "inhibit_response_function"
+  ],
+  "t0831": [
+    "impact"
+  ],
+  "t0800": [
+    "inhibit_response_function"
+  ],
+  "t0829": [
+    "impact"
+  ],
+  "t0887": [
+    "discovery",
+    "collection"
+  ],
+  "t0821": [
+    "execution"
+  ],
+  "t0836": [
+    "impair_process_control"
+  ],
+  "t0881": [
+    "inhibit_response_function"
+  ],
+  "t0803": [
+    "inhibit_response_function"
+  ],
+  "t0862": [
+    "initial_access"
+  ],
+  "t0806": [
+    "impair_process_control"
+  ],
+  "t0822": [
+    "initial_access"
+  ],
+  "t0812": [
+    "lateral_movement"
+  ],
+  "t0866": [
+    "initial_access",
+    "lateral_movement"
+  ],
+  "t0856": [
+    "evasion",
+    "impair_process_control"
+  ],
+  "t0879": [
+    "impact"
+  ],
+  "t0817": [
+    "initial_access"
+  ],
+  "t0895": [
+    "execution"
+  ],
+  "t0865": [
+    "initial_access"
+  ],
+  "t0828": [
+    "impact"
+  ],
+  "t0880": [
+    "impact"
+  ],
+  "t0871": [
+    "execution"
+  ],
+  "t0815": [
+    "impact"
+  ],
+  "t0877": [
+    "collection"
+  ],
+  "t0872": [
+    "evasion"
+  ],
+  "t0832": [
+    "impact"
+  ],
+  "t0809": [
+    "inhibit_response_function"
+  ],
+  "t0855": [
+    "impair_process_control"
+  ],
+  "t0804": [
+    "inhibit_response_function"
+  ],
+  "t0802": [
+    "collection"
+  ],
+  "t0851": [
+    "evasion",
+    "inhibit_response_function"
+  ],
+  "t0842": [
+    "discovery"
+  ]
+}
