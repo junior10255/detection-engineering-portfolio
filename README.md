@@ -36,7 +36,8 @@
 - Exfiltration
 
 
-## 📋 Detection Inventory (ordenado por risco)
+## 📋 Top 30 Regras Mais Relevantes
+
 | Nível | Tática | Regra | Qualidade | Link |
 |:---:|:---|:---|:---:|:---:|
 | 🟠 | Execution | `01_proc_creation_win_wmic_lateral_movement_ip.yml` | 100.0% | [📄 Ver](Sigma/execution/movimentacao_lateral_via_wmic_com_execucao_remota/01_proc_creation_win_wmic_lateral_movement_ip.yml) |
@@ -44,4 +45,4 @@
 | 🟡 | Persistence | `01_persistence_via_run_registry_key.yml` | 100.0% | [📄 Ver](Sigma/persistence/persistence_via_run_registry_key/01_persistence_via_run_registry_key.yml) |
 
 ---
-*Gerado via script.py v18.2 em 2026-04-13 20:53:03*
+*Gerado via script.py v18.3 em 2026-04-13 21:08:49*

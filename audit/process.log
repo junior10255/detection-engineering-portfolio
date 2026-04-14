@@ -68,3 +68,11 @@
 [INFO] 2026-04-13 20:53:03 Arquivos soltos: 0 YAML | 0 imagens | 0 markdown
 [INFO] 2026-04-13 20:53:03 Finalizado | Regras: 3 | Cobertura: 21.43% | Qualidade: 100.0% | High Impact: 66.67%
 [INFO] 2026-04-13 20:53:03 Gerados: README.md | metrics.json | metrics.prom | hash_cache.json
+[INFO] 2026-04-13 21:08:49 === Xtreme Organizer v18.3 | Modo: Normal ===
+[INFO] 2026-04-13 21:08:49 Config carregada: C:\Users\Junior\Documents\GitHub\detection-engineering-portfolio\config.yaml
+[INFO] 2026-04-13 21:08:49 ── Repositório: C:\Users\Junior\Documents\GitHub\detection-engineering-portfolio
+[INFO] 2026-04-13 21:08:49 Hash cache carregado: 6 entradas
+[INFO] 2026-04-13 21:08:49 Regras existentes: 3 (migradas: 0, normalizadas: 3)
+[INFO] 2026-04-13 21:08:49 Arquivos soltos: 0 YAML | 0 imagens | 0 markdown
+[INFO] 2026-04-13 21:08:49 Finalizado | Regras: 3 | Cobertura: 21.43% | Qualidade: 100.0% | High Impact: 66.67%
+[INFO] 2026-04-13 21:08:49 Gerados: README.md | inventory.md | metrics.json | metrics.prom | hash_cache.json
