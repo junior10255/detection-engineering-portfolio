@@ -3,6 +3,7 @@
     "active_density": 1.0,
     "high_impact_ratio": 66.67,
     "average_quality": 100.0,
+    "average_confidence": 39.97,
     "total_rules": 3,
     "tactics_covered": 3,
     "total_tactics": 14,
@@ -10,11 +11,11 @@
         "reconnaissance",
         "resource_development",
         "initial_access",
+        "execution",
         "privilege_escalation",
         "defense_evasion",
         "credential_access",
         "discovery",
-        "lateral_movement",
         "collection",
         "command_and_control",
         "exfiltration"
@@ -29,13 +30,13 @@
         "low": 0
     },
     "tactic_counts": {
-        "execution": 1,
         "impact": 1,
+        "lateral_movement": 1,
         "persistence": 1
     },
     "tactic_quality": {
-        "execution": 100.0,
         "impact": 100.0,
+        "lateral_movement": 100.0,
         "persistence": 100.0
     },
     "top_authors": {
@@ -45,5 +46,5 @@
         "windows/any/process_creation": 2,
         "windows/any/registry_event": 1
     },
-    "last_update": "2026-04-13T21:08:49.584670"
+    "last_update": "2026-04-13T21:52:17.568968"
 }
