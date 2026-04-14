@@ -30,6 +30,9 @@
     "invalid_rules": 0,
     "duplicate_rules": 0,
     "sigma_cli_failures": 0,
+    "version_distribution": {
+        "1": 3
+    },
     "severity_distribution": {
         "critical": 0,
         "high": 2,
@@ -53,5 +56,5 @@
         "windows/any/process_creation": 2,
         "windows/any/registry_event": 1
     },
-    "last_update": "2026-04-13T23:29:28.292669"
+    "last_update": "2026-04-13T23:47:46.255228"
 }

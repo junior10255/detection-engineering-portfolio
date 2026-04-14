@@ -204,3 +204,21 @@
 [INFO] 2026-04-13 23:29:28 Arquivos soltos: 0 YAML | 0 imagens | 0 markdown
 [INFO] 2026-04-13 23:29:28 Finalizado | Regras: 3 | Cobertura: 21.43% | Qualidade: 100.0% | Maturidade: 40.0% | Técnicas: 3
 [INFO] 2026-04-13 23:29:28 Gerados: README.md | inventory.md | metrics.json | metrics.prom | hash_cache.json
+[INFO] 2026-04-13 23:31:36 === Xtreme Organizer v20.2 | Modo: Normal ===
+[INFO] 2026-04-13 23:31:36 Config carregada: C:\Users\Junior\Documents\GitHub\detection-engineering-portfolio\config.yaml
+[INFO] 2026-04-13 23:31:36 MITRE mapping carregado do cache (898 técnicas)
+[INFO] 2026-04-13 23:31:36 ── Repositório: C:\Users\Junior\Documents\GitHub\detection-engineering-portfolio
+[INFO] 2026-04-13 23:31:36 Hash cache carregado: 7 entradas
+[INFO] 2026-04-13 23:31:36 Regras existentes: 3 (migradas: 0, normalizadas: 3)
+[INFO] 2026-04-13 23:31:36 Arquivos soltos: 0 YAML | 0 imagens | 0 markdown
+[INFO] 2026-04-13 23:31:36 Finalizado | Regras: 3 | Cobertura: 21.43% | Qualidade: 100.0% | Maturidade: 40.0% | Técnicas: 3
+[INFO] 2026-04-13 23:31:36 Gerados: README.md | inventory.md | metrics.json | metrics.prom | hash_cache.json
+[INFO] 2026-04-13 23:47:46 === Xtreme Organizer v21.0 | Modo: Normal ===
+[INFO] 2026-04-13 23:47:46 Config carregada: C:\Users\Junior\Documents\GitHub\detection-engineering-portfolio\config.yaml
+[INFO] 2026-04-13 23:47:46 MITRE mapping carregado do cache (898 técnicas)
+[INFO] 2026-04-13 23:47:46 ── Repositório: C:\Users\Junior\Documents\GitHub\detection-engineering-portfolio
+[INFO] 2026-04-13 23:47:46 Hash cache carregado: 7 entradas
+[INFO] 2026-04-13 23:47:46 Regras existentes: 3 (migradas: 0, normalizadas: 3)
+[INFO] 2026-04-13 23:47:46 Arquivos soltos: 0 YAML | 0 imagens | 0 markdown
+[INFO] 2026-04-13 23:47:46 Finalizado | Regras: 3 | Cobertura: 21.43% | Qualidade: 100.0% | Maturidade: 40.0% | Técnicas: 3
+[INFO] 2026-04-13 23:47:46 Gerados: README.md | inventory.md | metrics.json | metrics.prom | hash_cache.json

@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """
-Detection Engineering Portfolio - Xtreme v20.2 (Robust Sigma-CLI Detection)
-=======================================================================
-- Detecção aprimorada do sigma-cli (usa shutil.which)
-- Opção de configurar caminho manual: sigma_executable
-- Logs claros de disponibilidade do sigma-cli
+Detection Engineering Portfolio - Xtreme v21.0 (Versioned Rules Edition)
+========================================================================
+- Versionamento de regras (campo 'version' da regra Sigma)
+- Data de última modificação (last_modified)
+- Distribuição de versões nas métricas
+- Exibição de versão nas tabelas do README/inventory
 """
 
 from __future__ import annotations
@@ -27,7 +28,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional, Set, Tuple, Dict, List, Union, Any
 
-SCRIPT_VERSION = "20.2"
+SCRIPT_VERSION = "21.0"
 SCRIPT_NAME = Path(__file__).name
 
 # =============================================================================
@@ -60,7 +61,7 @@ DEFAULT_CONFIG: dict = {
     "ci_min_coverage": 50,
     "ci_min_quality": 70,
     "sigma_semaphore": 2,
-    "sigma_executable": "sigma",       # Caminho ou comando para o sigma-cli
+    "sigma_executable": "sigma",
     "add_tactic_gitkeep": True,
     "max_rules_in_readme": 30,
     "mitre_tactics": [
@@ -70,7 +71,6 @@ DEFAULT_CONFIG: dict = {
         "exfiltration", "impact",
     ],
     "extra_folders": ["research/pocs", "img", "tools", "audit", "duplicates"],
-    # Fallback manual (usado apenas se MITRE STIX falhar)
     "id_to_tactic": {
         "t1595": "reconnaissance",   "t1566": "initial_access",
         "t1059": "execution",        "t1047": "execution",
@@ -475,7 +475,7 @@ def compute_maturity(meta: dict, rule_dir: Path) -> int:
     return score
 
 # =============================================================================
-# Parsing Sigma
+# Parsing Sigma (com versionamento)
 # =============================================================================
 
 def _apply_heuristic(data: dict, cfg: dict) -> str:
@@ -576,6 +576,17 @@ def parse_sigma(
     category = ls_raw.get("category", "any")
     logsource = f"{product}/{service}/{category}".lower()
 
+    # Versão da regra
+    version = data.get("version", 1)
+    if not isinstance(version, (int, float)):
+        try:
+            version = int(version)
+        except (ValueError, TypeError):
+            version = 1
+
+    # Data de última modificação
+    last_modified = datetime.fromtimestamp(path.stat().st_mtime).isoformat()
+
     score_percent = compute_quality_score(data, cfg)
 
     # Táticas via tags (MITRE STIX)
@@ -615,6 +626,8 @@ def parse_sigma(
         "tactics_all":     list(set(found_tactics)),
         "technique_id":    technique,
         "level":           level,
+        "version":         version,
+        "last_modified":   last_modified,
         "score":           int(score_percent * cfg["max_quality_score"] / 100),
         "score_percent":   score_percent,
         "confidence":      confidence,
@@ -636,23 +649,18 @@ _SIGMA_CLI_LOCK = threading.Lock()
 _SIGMA_EXECUTABLE_PATH: Optional[str] = None
 
 def _find_sigma_executable(cfg: dict) -> Optional[str]:
-    """Encontra o executável do sigma-cli."""
-    # 1. Caminho especificado na configuração
     sigma_cmd = cfg.get("sigma_executable", "sigma")
     if sigma_cmd != "sigma":
-        # Se não for o nome padrão, assume que é um caminho completo
         if Path(sigma_cmd).exists():
             return sigma_cmd
         else:
             logger.warning(f"Caminho sigma_executable '{sigma_cmd}' não encontrado.")
             return None
 
-    # 2. Procura no PATH usando shutil.which
     found = shutil.which("sigma")
     if found:
         return found
 
-    # 3. Tentativa adicional em diretórios comuns (Windows)
     if os.name == 'nt':
         local_app_data = os.environ.get("LOCALAPPDATA", "")
         possible = Path(local_app_data) / "Python" / "pythoncore-3.14-64" / "Scripts" / "sigma.exe"
@@ -668,7 +676,6 @@ def _check_sigma_cli(cfg: dict) -> bool:
             sigma_path = _find_sigma_executable(cfg)
             if sigma_path:
                 try:
-                    # Testa se o executável funciona
                     subprocess.run([sigma_path, "version"], capture_output=True, timeout=5, check=False)
                     _SIGMA_CLI_AVAILABLE = True
                     _SIGMA_EXECUTABLE_PATH = sigma_path
@@ -912,7 +919,7 @@ def organize_markdown(src: Path, base: Path) -> None:
     logger.info("Markdown movido: %s → research/pocs/", src.name)
 
 # =============================================================================
-# Métricas
+# Métricas (com versionamento)
 # =============================================================================
 
 def compute_technique_metrics(inventory: list[dict]) -> dict:
@@ -949,6 +956,12 @@ def compute_metrics(inventory: list[dict], stats: Stats, cfg: dict) -> dict:
     high_impact  = stats.severity["critical"] + stats.severity["high"]
     impact_ratio = round((high_impact / total) * 100, 2) if total else 0.0
 
+    # Distribuição de versões
+    version_dist: Dict[int, int] = {}
+    for item in inventory:
+        ver = item.get("version", 1)
+        version_dist[ver] = version_dist.get(ver, 0) + 1
+
     tactic_counts: dict[str, int] = {}
     tactic_quality: dict[str, list[float]] = {}
     for item in inventory:
@@ -981,6 +994,7 @@ def compute_metrics(inventory: list[dict], stats: Stats, cfg: dict) -> dict:
         "invalid_rules":         stats.invalid_count,
         "duplicate_rules":       stats.duplicate_count,
         "sigma_cli_failures":    stats.sigma_cli_failures,
+        "version_distribution":   version_dist,
         "severity_distribution": dict(stats.severity),
         "tactic_counts":         tactic_counts,
         "tactic_quality":        avg_quality_by_tactic,
@@ -990,7 +1004,7 @@ def compute_metrics(inventory: list[dict], stats: Stats, cfg: dict) -> dict:
     }
 
 # =============================================================================
-# README e Inventory
+# README e Inventory (com versão)
 # =============================================================================
 
 SEV_RANK  = {"critical": 4, "high": 3, "medium": 2, "low": 1}
@@ -1015,15 +1029,16 @@ def render_inventory(inventory: list[dict]) -> str:
         key=lambda x: (SEV_RANK.get(x["level"], 0), x["score_percent"]),
         reverse=True,
     )
-    table  = "| Nível | Tática(s) | Regra | Qualidade | Conf. | Mat. | Link |\n"
-    table += "|:---:|:---|:---|:---:|:---:|:---:|:---:|\n"
+    table  = "| Nível | Tática(s) | Regra | Ver. | Qualidade | Conf. | Mat. | Link |\n"
+    table += "|:---:|:---|:---|:---:|:---:|:---:|:---:|:---:|\n"
     for item in sorted_inv:
         em    = SEV_EMOJI.get(item["level"], "⚪")
         title = _get_display_tactic(item)
+        ver   = item.get("version", 1)
         conf  = item.get("confidence", 0)
         mat   = item.get("maturity", 0)
         mat_em = _get_maturity_emoji(mat)
-        table += f"| {em} | {title} | `{item['file']}` | {item['score_percent']}% | {conf:.0f}% | {mat_em} {mat} | [📄 Ver]({item['link']}) |\n"
+        table += f"| {em} | {title} | `{item['file']}` | {ver} | {item['score_percent']}% | {conf:.0f}% | {mat_em} {mat} | [📄 Ver]({item['link']}) |\n"
     return f"""# 📋 Inventário Completo de Regras Sigma
 
 **Total de regras:** {len(inventory)}
@@ -1049,6 +1064,7 @@ def render_readme(metrics: dict, inventory: list[dict], max_display: int = 30) -
     qual_tac = metrics["tactic_quality"]
     tech_cov = metrics.get("techniques_covered", 0)
     tech_dist = metrics.get("technique_distribution", {})
+    version_dist = metrics.get("version_distribution", {})
 
     sorted_inv = sorted(
         inventory,
@@ -1057,15 +1073,16 @@ def render_readme(metrics: dict, inventory: list[dict], max_display: int = 30) -
     )
     display_inv = sorted_inv[:max_display]
 
-    table  = "| Nível | Tática(s) | Regra | Qualidade | Conf. | Mat. | Link |\n"
-    table += "|:---:|:---|:---|:---:|:---:|:---:|:---:|\n"
+    table  = "| Nível | Tática(s) | Regra | Ver. | Qualidade | Conf. | Mat. | Link |\n"
+    table += "|:---:|:---|:---|:---:|:---:|:---:|:---:|:---:|\n"
     for item in display_inv:
         em    = SEV_EMOJI.get(item["level"], "⚪")
         title = _get_display_tactic(item)
+        ver   = item.get("version", 1)
         conf  = item.get("confidence", 0)
         mat   = item.get("maturity", 0)
         mat_em = _get_maturity_emoji(mat)
-        table += f"| {em} | {title} | `{item['file']}` | {item['score_percent']}% | {conf:.0f}% | {mat_em} {mat} | [📄 Ver]({item['link']}) |\n"
+        table += f"| {em} | {title} | `{item['file']}` | {ver} | {item['score_percent']}% | {conf:.0f}% | {mat_em} {mat} | [📄 Ver]({item['link']}) |\n"
 
     remaining = total - len(display_inv)
     note = ""
@@ -1081,6 +1098,11 @@ def render_readme(metrics: dict, inventory: list[dict], max_display: int = 30) -
     tech_table = "| Técnica MITRE | Ocorrências |\n|:---|:---:|\n"
     for tech, count in top_tech:
         tech_table += f"| `{tech.upper()}` | {count} |\n"
+
+    # Distribuição de versões
+    version_table = "| Versão | Quantidade |\n|:---:|:---:|\n"
+    for ver, count in sorted(version_dist.items()):
+        version_table += f"| {ver} | {count} |\n"
 
     gaps = (
         "## 🚨 Coverage Gaps\n" + "".join(f"- {t.replace('_',' ').title()}\n" for t in missing)
@@ -1108,6 +1130,9 @@ def render_readme(metrics: dict, inventory: list[dict], max_display: int = 30) -
 - **Regras Inválidas:** {invalid}
 - **Regras Duplicadas Ignoradas:** {dups}
 - **Impacto Alto (Critical/High):** {impact}% das regras
+
+## 📦 Versionamento
+{version_table}
 
 ## 🔬 Top Técnicas MITRE
 {tech_table}
