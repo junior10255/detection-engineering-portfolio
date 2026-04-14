@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """
-Detection Engineering Portfolio - Xtreme v18.3 (Professional Edition)
-=====================================================================
-- README executivo: TOP N regras (padrão 30)
-- inventory.md com lista completa
-- Higienização total da estrutura Sigma/
-- Normalização de subpastas pelo título
-- Hash cache, thread‑safety, sigma‑cli opcional
+Detection Engineering Portfolio - Xtreme v18.6 (Precision & Confidence Edition)
+================================================================================
+- Correção: heuristic_weights adicionado ao DEFAULT_CONFIG
+- Ajuste fino: remote_execution_boost = 12 (evita viés)
+- Penalização contextual: wmic local reduz score de lateral_movement
+- Parsing avançado da detecção (operadores Sigma)
+- Confidence score (0-100) baseado na margem de decisão
+- Qualidade: penalidade para descrições genéricas
 """
 
 from __future__ import annotations
@@ -27,9 +28,9 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Set, Tuple, Dict
+from typing import Optional, Set, Tuple, Dict, List, Union, Any
 
-SCRIPT_VERSION = "18.3"
+SCRIPT_VERSION = "18.6"
 SCRIPT_NAME = Path(__file__).name
 
 # =============================================================================
@@ -53,7 +54,7 @@ def setup_logging(ci_mode: bool = False) -> None:
 logger = logging.getLogger(__name__)
 
 # =============================================================================
-# Configuração
+# Configuração (com ajustes e adição de heuristic_weights)
 # =============================================================================
 
 DEFAULT_CONFIG: dict = {
@@ -80,19 +81,44 @@ DEFAULT_CONFIG: dict = {
         "t1087": "discovery",        "t1082": "discovery",
         "t1485": "impact",           "t1071": "command_and_control",
     },
+    # Heurística de fallback (agora presente)
     "heuristic_weights": {
         "credential_access": [["lsass", 3], ["mimikatz", 4], ["password", 1]],
         "lateral_movement":  [["psexec", 4], ["smb", 2],     ["rpc", 1]],
         "discovery":         [["whoami", 3], ["net user", 3], ["ipconfig", 2]],
         "impact":            [["ransom", 4], ["encrypt", 3],  ["shadowcopy", 4]],
         "defense_evasion":   [["disable", 1], ["obfuscation", 3], ["tamper", 3]],
+        "execution":         [["cmd", 2], ["powershell", 2], ["wmic", 2], ["process", 1]],
     },
     "heuristic_min_score": 3,
+    # Pontuação para classificação tática
+    "tactic_score_tag": 10,
+    "tactic_score_keyword": 5,
+    "tactic_score_detection": 8,
+    "network_context_weight": 5,
+    "remote_execution_boost": 12,        # Reduzido de 20 para 12
+    "local_execution_penalty": -5,       # Penalidade para wmic local
+    # Palavras-chave específicas por tática
+    "tactic_keywords": {
+        "lateral_movement": ["lateral", "remote", "psexec", "wmic", "node:", "\\\\", "smb", "rpc"],
+        "credential_access": ["lsass", "mimikatz", "dump", "credential", "sam", "ntds"],
+        "execution": ["cmd", "powershell", "wmic", "process", "call", "create"],
+        "persistence": ["run", "registry", "startup", "schedule", "task", "service"],
+        "privilege_escalation": ["elevate", "bypass", "uac", "admin", "system"],
+        "defense_evasion": ["obfuscate", "disable", "defender", "amsi", "clear"],
+        "discovery": ["whoami", "net", "ipconfig", "systeminfo", "discover"],
+        "impact": ["ransom", "encrypt", "shadow", "delete", "destroy"],
+        "exfiltration": ["upload", "exfil", "send", "post", "ftp"],
+        "command_and_control": ["beacon", "callback", "c2", "http", "dns"],
+    },
     "max_quality_score": 100,
     "quality_bonus": {
         "description": 20, "author": 10, "falsepositives": 15,
         "references":  10, "tags": 25,   "id": 20,
     },
+    # Penalidades de qualidade
+    "quality_generic_description_penalty": -5,
+    "quality_min_description_length": 30,
 }
 
 def load_config(config_path: Path) -> dict:
@@ -286,7 +312,126 @@ def compute_content_hash(path: Path, cache: Optional[HashCache] = None) -> str:
     return file_hash
 
 # =============================================================================
-# Parsing Sigma
+# Classificação Tática Inteligente (v18.6 com penalização e confiança)
+# =============================================================================
+
+def extract_text_from_detection(detection: Any) -> str:
+    """
+    Extrai texto relevante da seção 'detection', entendendo operadores Sigma
+    como 'contains', 'endswith', 're', etc.
+    """
+    texts = []
+
+    def recurse(obj: Any, parent_key: str = "") -> None:
+        if isinstance(obj, dict):
+            for k, v in obj.items():
+                # Se a chave for um operador Sigma, extraímos os valores
+                if k in ("contains", "endswith", "startswith", "re", "all", "any"):
+                    if isinstance(v, list):
+                        for item in v:
+                            texts.append(str(item).lower())
+                    else:
+                        texts.append(str(v).lower())
+                elif k in ("CommandLine", "Image", "ParentImage", "ProcessName", "Details"):
+                    texts.append(str(v).lower())
+                recurse(v, k)
+        elif isinstance(obj, list):
+            for item in obj:
+                recurse(item, parent_key)
+        elif isinstance(obj, str):
+            texts.append(obj.lower())
+
+    recurse(detection)
+    return " ".join(texts)
+
+
+def score_tactics_from_data(data: dict, cfg: dict, tags_found: List[str]) -> Dict[str, int]:
+    """
+    Calcula pontuação para cada tática com base em tags, keywords, detecção e contexto.
+    Inclui penalizações para falsos positivos.
+    """
+    scores = {t: 0 for t in cfg["mitre_tactics"]}
+    scores["uncategorized"] = 0
+
+    # 1. Tags MITRE
+    tag_score = cfg.get("tactic_score_tag", 10)
+    for tactic in tags_found:
+        if tactic in scores:
+            scores[tactic] += tag_score
+
+    # 2. Título e descrição
+    title = str(data.get("title", "")).lower()
+    desc = str(data.get("description", "")).lower()
+    combined_text = f"{title} {desc}"
+    keywords_map = cfg.get("tactic_keywords", {})
+    kw_score = cfg.get("tactic_score_keyword", 5)
+    for tactic, keywords in keywords_map.items():
+        for kw in keywords:
+            if kw in combined_text:
+                scores[tactic] += kw_score
+
+    # 3. Lógica de detecção (com parsing avançado)
+    detection_text = extract_text_from_detection(data.get("detection", {}))
+    det_score = cfg.get("tactic_score_detection", 8)
+    for tactic, keywords in keywords_map.items():
+        for kw in keywords:
+            if kw in detection_text:
+                scores[tactic] += det_score
+
+    # 4. Contexto de rede
+    network_indicators = ["/node:", "\\\\\\\\", "\\\\", "remote", "smb", "rpc"]
+    if any(ind in detection_text for ind in network_indicators):
+        net_weight = cfg.get("network_context_weight", 5)
+        scores["lateral_movement"] += net_weight
+        scores["exfiltration"] += net_weight // 2
+        scores["command_and_control"] += net_weight // 2
+
+    # 5. Boost/Penalidade para wmic
+    if "wmic" in detection_text:
+        if "/node:" in detection_text or "\\\\" in detection_text:
+            scores["lateral_movement"] += cfg.get("remote_execution_boost", 12)
+        else:
+            # Penalidade: wmic local não é lateral movement
+            penalty = cfg.get("local_execution_penalty", -5)
+            scores["lateral_movement"] += penalty
+            # Garante que não fique negativo (opcional)
+            scores["lateral_movement"] = max(0, scores["lateral_movement"])
+
+    # 6. Credential access
+    cred_indicators = ["lsass", "sam", "ntds", "credential", "mimikatz"]
+    if any(ind in detection_text for ind in cred_indicators):
+        scores["credential_access"] += det_score
+
+    return scores
+
+
+def determine_primary_tactics_with_confidence(
+    data: dict, cfg: dict, tags_found: List[str]
+) -> Tuple[List[str], float]:
+    """
+    Retorna (lista de táticas com maior score, confiança 0-100).
+    A confiança é baseada na diferença percentual entre o primeiro e o segundo colocado.
+    """
+    scores = score_tactics_from_data(data, cfg, tags_found)
+    if not scores or max(scores.values()) == 0:
+        return ["uncategorized"], 0.0
+
+    sorted_items = sorted(scores.items(), key=lambda x: x[1], reverse=True)
+    max_score = sorted_items[0][1]
+    second_score = sorted_items[1][1] if len(sorted_items) > 1 else 0
+
+    # Confiança: diferença normalizada (0 se empate, 100 se segundo é zero)
+    if max_score == 0:
+        confidence = 0.0
+    else:
+        confidence = ((max_score - second_score) / max_score) * 100.0
+
+    primary = [t for t, s in sorted_items if s == max_score]
+    return primary, round(confidence, 2)
+
+
+# =============================================================================
+# Parsing Sigma (com qualidade refinada)
 # =============================================================================
 
 def _apply_heuristic(data: dict, cfg: dict) -> str:
@@ -302,6 +447,39 @@ def _apply_heuristic(data: dict, cfg: dict) -> str:
         return "uncategorized"
     best = max(scores, key=scores.get)
     return best if scores[best] >= min_score else "uncategorized"
+
+
+def compute_quality_score(data: dict, cfg: dict) -> float:
+    """Calcula score de qualidade com penalidades para descrições genéricas."""
+    bonus = cfg["quality_bonus"]
+    max_score = cfg["max_quality_score"]
+    raw_score = 0
+
+    for field, pts in bonus.items():
+        val = data.get(field)
+        if field == "description":
+            if isinstance(val, str):
+                desc_len = len(val.strip())
+                if desc_len >= cfg.get("quality_min_description_length", 30):
+                    raw_score += pts
+                elif desc_len >= 20:
+                    raw_score += pts // 2
+                # Penalidade para descrições muito genéricas (ex.: "Detects X")
+                if desc_len < 40 and re.search(r"detect(s)?\s+\w+", val, re.I):
+                    raw_score += cfg.get("quality_generic_description_penalty", -5)
+        elif field == "falsepositives":
+            if val and (isinstance(val, str) and val.strip()) or (isinstance(val, list) and val):
+                raw_score += pts
+        elif field == "tags":
+            if isinstance(val, list) and len(val) > 0:
+                raw_score += pts
+        elif field in ("author", "references", "id"):
+            if val:
+                raw_score += pts
+
+    score = min(max_score, max(0, raw_score))
+    return round((score / max_score) * 100, 2)
+
 
 def parse_sigma(
     path: Path,
@@ -357,32 +535,15 @@ def parse_sigma(
     category = ls_raw.get("category", "any")
     logsource = f"{product}/{service}/{category}".lower()
 
-    bonus: dict    = cfg["quality_bonus"]
-    max_score: int = cfg["max_quality_score"]
-    raw_score = 0
-    for field, pts in bonus.items():
-        val = data.get(field)
-        if field == "description":
-            if isinstance(val, str) and len(val.strip()) >= 20:
-                raw_score += pts
-        elif field == "falsepositives":
-            if val and (isinstance(val, str) and val.strip()) or (isinstance(val, list) and val):
-                raw_score += pts
-        elif field == "tags":
-            if isinstance(val, list) and len(val) > 0:
-                raw_score += pts
-        elif field in ("author", "references", "id"):
-            if val:
-                raw_score += pts
-    score         = min(max_score, raw_score)
-    score_percent = round((score / max_score) * 100, 2)
+    # Qualidade refinada
+    score_percent = compute_quality_score(data, cfg)
 
-    tactic    = "uncategorized"
-    technique = None
+    # Táticas via tags
     id_map: dict   = cfg["id_to_tactic"]
     mitre_list: list = cfg["mitre_tactics"]
     tags = data.get("tags") or []
-    resolved = False
+    found_tactics = []
+    technique = None
     if isinstance(tags, list):
         for tag in tags:
             tl = str(tag).lower()
@@ -392,29 +553,34 @@ def parse_sigma(
                     tid = m.group().split('.')[0]
                     technique = m.group()
                     if tid in id_map:
-                        tactic   = id_map[tid]
-                        resolved = True
-                        break
+                        found_tactics.append(id_map[tid])
             elif "attack." in tl:
                 t_name = tl.split(".")[-1].replace("-", "_")
                 if t_name in mitre_list:
-                    tactic   = t_name
-                    resolved = True
-                    break
-    if not resolved:
-        tactic = _apply_heuristic(data, cfg)
+                    found_tactics.append(t_name)
+
+    if not found_tactics:
+        heuristic_tactic = _apply_heuristic(data, cfg)
+        found_tactics = [heuristic_tactic]
+
+    # Determinação de táticas primárias com confiança
+    primary_tactics, confidence = determine_primary_tactics_with_confidence(data, cfg, found_tactics)
 
     folder_name = extract_folder_name_from_data(data, path.stem)
-    rel_link = f"Sigma/{tactic}/{folder_name}/{path.name}"
+    # Para diretório, usa a primeira tática (ordem alfabética para consistência)
+    dir_tactic = sorted(primary_tactics)[0] if primary_tactics else "uncategorized"
+    rel_link = f"Sigma/{dir_tactic}/{folder_name}/{path.name}"
 
     meta = {
         "file":            path.name,
         "folder":          folder_name,
-        "tactic":          tactic,
+        "tactic":          primary_tactics,
+        "tactics_all":     list(set(found_tactics)),
         "technique_id":    technique,
         "level":           level,
-        "score":           score,
+        "score":           int(score_percent * cfg["max_quality_score"] / 100),
         "score_percent":   score_percent,
+        "confidence":      confidence,
         "author":          author,
         "logsource":       logsource,
         "link":            rel_link,
@@ -423,6 +589,7 @@ def parse_sigma(
     }
     stats.record(meta)
     return meta, "ok"
+
 
 # =============================================================================
 # sigma-cli
@@ -463,14 +630,20 @@ def validate_with_sigma_cli(path: Path, semaphore: threading.Semaphore) -> tuple
             return False, str(exc)
 
 # =============================================================================
-# Migração e Normalização
+# Migração e Normalização (mantidas, com ajuste para tática lista)
 # =============================================================================
 
 IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".svg"}
 YAML_EXTS  = {".yml", ".yaml"}
 
+def _get_dir_tactic(meta: dict) -> str:
+    t = meta["tactic"]
+    if isinstance(t, list):
+        return sorted(t)[0] if t else "uncategorized"
+    return t
+
 def migrate_loose_rule(yf: Path, base: Path, meta: dict) -> Optional[dict]:
-    tactic = meta["tactic"]
+    tactic = _get_dir_tactic(meta)
     folder_name = meta["folder"]
     rule_dir = base / "Sigma" / tactic / folder_name
     poc_dir = rule_dir / "poc"
@@ -492,7 +665,8 @@ def migrate_loose_rule(yf: Path, base: Path, meta: dict) -> Optional[dict]:
 
 def normalize_existing_rule(yf: Path, base: Path, meta: dict) -> Optional[dict]:
     current_parent = yf.parent
-    expected_parent = base / "Sigma" / meta["tactic"] / meta["folder"]
+    tactic = _get_dir_tactic(meta)
+    expected_parent = base / "Sigma" / tactic / meta["folder"]
 
     if current_parent == expected_parent:
         poc_dir = current_parent / "poc"
@@ -508,11 +682,11 @@ def normalize_existing_rule(yf: Path, base: Path, meta: dict) -> Optional[dict]:
 
         dest_yml = _resolve_collision(expected_parent / yf.name)
         shutil.move(str(yf), str(dest_yml))
-        logger.info("Normalizado: %s → Sigma/%s/%s/", yf.name, meta["tactic"], meta["folder"])
+        logger.info("Normalizado: %s → Sigma/%s/%s/", yf.name, tactic, meta["folder"])
 
         remove_empty_dir(current_parent)
 
-        meta["link"] = f"Sigma/{meta['tactic']}/{meta['folder']}/{dest_yml.name}"
+        meta["link"] = f"Sigma/{tactic}/{meta['folder']}/{dest_yml.name}"
         return meta
     except Exception as e:
         logger.error("Falha ao normalizar %s: %s", yf.name, e)
@@ -610,7 +784,7 @@ def discover_files(
     return yaml_files, image_files, md_files
 
 def organize_file(src: Path, meta: dict, base: Path) -> None:
-    tactic = meta["tactic"]
+    tactic = _get_dir_tactic(meta)
     folder_name = meta["folder"]
     try:
         rule_dir = _safe_dest(base, "Sigma", tactic, folder_name)
@@ -659,13 +833,20 @@ def organize_markdown(src: Path, base: Path) -> None:
     logger.info("Markdown movido: %s → research/pocs/", src.name)
 
 # =============================================================================
-# Métricas
+# Métricas (considerando múltiplas táticas)
 # =============================================================================
 
 def compute_metrics(inventory: list[dict], stats: Stats, cfg: dict) -> dict:
     mitre_tactics: list = cfg["mitre_tactics"]
     total    = len(inventory)
-    covered  = {i["tactic"] for i in inventory if i["tactic"] != "uncategorized"}
+    covered  = set()
+    for item in inventory:
+        t = item["tactic"]
+        if isinstance(t, list):
+            covered.update(t)
+        else:
+            covered.add(t)
+    covered.discard("uncategorized")
     missing  = [t for t in mitre_tactics if t not in covered]
     n_mitre  = len(mitre_tactics)
     tactics_covered = len(covered)
@@ -673,15 +854,19 @@ def compute_metrics(inventory: list[dict], stats: Stats, cfg: dict) -> dict:
     coverage    = round((tactics_covered / n_mitre) * 100, 2) if total else 0.0
     density     = round(total / tactics_covered, 2) if tactics_covered else 0.0
     avg_quality = round(sum(i["score_percent"] for i in inventory) / total, 2) if total else 0.0
+    avg_confidence = round(sum(i.get("confidence", 0) for i in inventory) / total, 2) if total else 0.0
     high_impact  = stats.severity["critical"] + stats.severity["high"]
     impact_ratio = round((high_impact / total) * 100, 2) if total else 0.0
 
     tactic_counts: dict[str, int] = {}
     tactic_quality: dict[str, list[float]] = {}
     for item in inventory:
-        t = item["tactic"]
-        tactic_counts[t] = tactic_counts.get(t, 0) + 1
-        tactic_quality.setdefault(t, []).append(item["score_percent"])
+        t_list = item["tactic"] if isinstance(item["tactic"], list) else [item["tactic"]]
+        for t in t_list:
+            if t == "uncategorized":
+                continue
+            tactic_counts[t] = tactic_counts.get(t, 0) + 1
+            tactic_quality.setdefault(t, []).append(item["score_percent"])
 
     avg_quality_by_tactic = {
         t: round(sum(scores)/len(scores), 2)
@@ -693,6 +878,7 @@ def compute_metrics(inventory: list[dict], stats: Stats, cfg: dict) -> dict:
         "active_density":        density,
         "high_impact_ratio":     impact_ratio,
         "average_quality":       avg_quality,
+        "average_confidence":    avg_confidence,
         "total_rules":           total,
         "tactics_covered":       tactics_covered,
         "total_tactics":         n_mitre,
@@ -715,18 +901,25 @@ def compute_metrics(inventory: list[dict], stats: Stats, cfg: dict) -> dict:
 SEV_RANK  = {"critical": 4, "high": 3, "medium": 2, "low": 1}
 SEV_EMOJI = {"critical": "🔴", "high": "🟠", "medium": "🟡", "low": "🔵"}
 
+def _get_display_tactic(item: dict) -> str:
+    t = item["tactic"]
+    if isinstance(t, list):
+        return ", ".join(t).replace("_", " ").title()
+    return t.replace("_", " ").title()
+
 def render_inventory(inventory: list[dict]) -> str:
     sorted_inv = sorted(
         inventory,
         key=lambda x: (SEV_RANK.get(x["level"], 0), x["score_percent"]),
         reverse=True,
     )
-    table  = "| Nível | Tática | Regra | Qualidade | Link |\n"
-    table += "|:---:|:---|:---|:---:|:---:|\n"
+    table  = "| Nível | Tática(s) | Regra | Qualidade | Conf. | Link |\n"
+    table += "|:---:|:---|:---|:---:|:---:|:---:|\n"
     for item in sorted_inv:
         em    = SEV_EMOJI.get(item["level"], "⚪")
-        title = item["tactic"].replace("_", " ").title()
-        table += f"| {em} | {title} | `{item['file']}` | {item['score_percent']}% | [📄 Ver]({item['link']}) |\n"
+        title = _get_display_tactic(item)
+        conf  = item.get("confidence", 0)
+        table += f"| {em} | {title} | `{item['file']}` | {item['score_percent']}% | {conf:.0f}% | [📄 Ver]({item['link']}) |\n"
     return f"""# 📋 Inventário Completo de Regras Sigma
 
 **Total de regras:** {len(inventory)}
@@ -741,6 +934,7 @@ def render_readme(metrics: dict, inventory: list[dict], max_display: int = 30) -
     density = metrics["active_density"]
     impact  = metrics["high_impact_ratio"]
     quality = metrics["average_quality"]
+    confid  = metrics.get("average_confidence", 0)
     total   = metrics["total_rules"]
     covered = metrics["tactics_covered"]
     n_mitre = metrics["total_tactics"]
@@ -756,12 +950,13 @@ def render_readme(metrics: dict, inventory: list[dict], max_display: int = 30) -
     )
     display_inv = sorted_inv[:max_display]
 
-    table  = "| Nível | Tática | Regra | Qualidade | Link |\n"
-    table += "|:---:|:---|:---|:---:|:---:|\n"
+    table  = "| Nível | Tática(s) | Regra | Qualidade | Conf. | Link |\n"
+    table += "|:---:|:---|:---|:---:|:---:|:---:|\n"
     for item in display_inv:
         em    = SEV_EMOJI.get(item["level"], "⚪")
-        title = item["tactic"].replace("_", " ").title()
-        table += f"| {em} | {title} | `{item['file']}` | {item['score_percent']}% | [📄 Ver]({item['link']}) |\n"
+        title = _get_display_tactic(item)
+        conf  = item.get("confidence", 0)
+        table += f"| {em} | {title} | `{item['file']}` | {item['score_percent']}% | {conf:.0f}% | [📄 Ver]({item['link']}) |\n"
 
     remaining = total - len(display_inv)
     note = ""
@@ -783,12 +978,14 @@ def render_readme(metrics: dict, inventory: list[dict], max_display: int = 30) -
 ![Active Density](https://img.shields.io/badge/Active%20Density-{density}-orange)
 ![High Impact](https://img.shields.io/badge/High%20Impact-{impact}%25-red)
 ![Avg Quality](https://img.shields.io/badge/Avg%20Quality-{quality}%25-yellow)
+![Avg Confidence](https://img.shields.io/badge/Avg%20Confidence-{confid:.0f}%25-green)
 
 ## 📊 Executive Insights
 - **Total de Regras:** {total}
 - **Táticas Cobertas:** {covered} / {n_mitre}
 - **Densidade Real:** {density} regras por tática ativa
 - **Qualidade Média:** {quality}%
+- **Confiança Média:** {confid:.0f}%
 - **Regras Inválidas:** {invalid}
 - **Regras Duplicadas Ignoradas:** {dups}
 - **Impacto Alto (Critical/High):** {impact}% das regras
@@ -826,6 +1023,7 @@ def render_openmetrics(metrics: dict) -> str:
     add("sigma_rules_total",       "Total de regras Sigma",                     metrics["total_rules"])
     add("sigma_coverage_percent",  "Cobertura MITRE",                           metrics["global_coverage"])
     add("sigma_quality_average",   "Qualidade média",                           metrics["average_quality"])
+    add("sigma_confidence_average","Confiança média da classificação",          metrics.get("average_confidence", 0))
     add("sigma_high_impact_ratio", "Percentual Critical/High",                  metrics["high_impact_ratio"])
     add("sigma_active_density",    "Densidade ativa",                           metrics["active_density"])
     add("sigma_invalid_rules",     "Regras inválidas",                          metrics["invalid_rules"])
@@ -998,9 +1196,9 @@ def main() -> None:
         _safe_write(output_dir / "README.md", render_readme(metrics, combined_inventory, max_display))
         _safe_write(output_dir / "inventory.md", render_inventory(combined_inventory))
 
-    logger.info("Finalizado | Regras: %d | Cobertura: %s%% | Qualidade: %s%% | High Impact: %s%%",
+    logger.info("Finalizado | Regras: %d | Cobertura: %s%% | Qualidade: %s%% | Confiança: %s%%",
                 metrics["total_rules"], metrics["global_coverage"],
-                metrics["average_quality"], metrics["high_impact_ratio"])
+                metrics["average_quality"], metrics.get("average_confidence", 0))
     if not args.ci:
         logger.info("Gerados: README.md | inventory.md | metrics.json | metrics.prom | hash_cache.json")
 

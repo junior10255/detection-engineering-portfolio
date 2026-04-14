@@ -76,3 +76,20 @@
 [INFO] 2026-04-13 21:08:49 Arquivos soltos: 0 YAML | 0 imagens | 0 markdown
 [INFO] 2026-04-13 21:08:49 Finalizado | Regras: 3 | Cobertura: 21.43% | Qualidade: 100.0% | High Impact: 66.67%
 [INFO] 2026-04-13 21:08:49 Gerados: README.md | inventory.md | metrics.json | metrics.prom | hash_cache.json
+[INFO] 2026-04-13 21:21:12 === Xtreme Organizer v18.4 | Modo: Normal ===
+[INFO] 2026-04-13 21:21:12 Config carregada: C:\Users\Junior\Documents\GitHub\detection-engineering-portfolio\config.yaml
+[INFO] 2026-04-13 21:21:12 ── Repositório: C:\Users\Junior\Documents\GitHub\detection-engineering-portfolio
+[INFO] 2026-04-13 21:21:12 Hash cache carregado: 6 entradas
+[INFO] 2026-04-13 21:21:12 Normalizado: 01_proc_creation_win_wmic_lateral_movement_ip.yml → Sigma/lateral_movement/movimentacao_lateral_via_wmic_com_execucao_remota/
+[INFO] 2026-04-13 21:21:12 Regras existentes: 3 (migradas: 0, normalizadas: 3)
+[INFO] 2026-04-13 21:21:12 Arquivos soltos: 0 YAML | 0 imagens | 0 markdown
+[INFO] 2026-04-13 21:21:12 Finalizado | Regras: 3 | Cobertura: 21.43% | Qualidade: 100.0% | High Impact: 66.67%
+[INFO] 2026-04-13 21:21:12 Gerados: README.md | inventory.md | metrics.json | metrics.prom | hash_cache.json
+[INFO] 2026-04-13 21:52:17 === Xtreme Organizer v18.6 | Modo: Normal ===
+[INFO] 2026-04-13 21:52:17 Config carregada: C:\Users\Junior\Documents\GitHub\detection-engineering-portfolio\config.yaml
+[INFO] 2026-04-13 21:52:17 ── Repositório: C:\Users\Junior\Documents\GitHub\detection-engineering-portfolio
+[INFO] 2026-04-13 21:52:17 Hash cache carregado: 6 entradas
+[INFO] 2026-04-13 21:52:17 Regras existentes: 3 (migradas: 0, normalizadas: 3)
+[INFO] 2026-04-13 21:52:17 Arquivos soltos: 0 YAML | 0 imagens | 0 markdown
+[INFO] 2026-04-13 21:52:17 Finalizado | Regras: 3 | Cobertura: 21.43% | Qualidade: 100.0% | Confiança: 39.97%
+[INFO] 2026-04-13 21:52:17 Gerados: README.md | inventory.md | metrics.json | metrics.prom | hash_cache.json
