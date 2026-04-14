@@ -1,50 +1,50 @@
 # HELP sigma_rules_total Total de regras Sigma
 # TYPE sigma_rules_total gauge
-sigma_rules_total 3 1776127937570
+sigma_rules_total 3 1776129552590
 
 # HELP sigma_coverage_percent Cobertura MITRE
 # TYPE sigma_coverage_percent gauge
-sigma_coverage_percent 21.43 1776127937570
+sigma_coverage_percent 21.43 1776129552590
 
 # HELP sigma_quality_average Qualidade média
 # TYPE sigma_quality_average gauge
-sigma_quality_average 100.0 1776127937570
+sigma_quality_average 100.0 1776129552590
 
 # HELP sigma_confidence_average Confiança média da classificação
 # TYPE sigma_confidence_average gauge
-sigma_confidence_average 39.97 1776127937570
+sigma_confidence_average 39.97 1776129552590
 
 # HELP sigma_high_impact_ratio Percentual Critical/High
 # TYPE sigma_high_impact_ratio gauge
-sigma_high_impact_ratio 66.67 1776127937570
+sigma_high_impact_ratio 66.67 1776129552590
 
 # HELP sigma_active_density Densidade ativa
 # TYPE sigma_active_density gauge
-sigma_active_density 1.0 1776127937570
+sigma_active_density 1.0 1776129552590
 
 # HELP sigma_invalid_rules Regras inválidas
 # TYPE sigma_invalid_rules gauge
-sigma_invalid_rules 0 1776127937570
+sigma_invalid_rules 0 1776129552590
 
 # HELP sigma_duplicate_rules Regras duplicadas
 # TYPE sigma_duplicate_rules gauge
-sigma_duplicate_rules 0 1776127937570
+sigma_duplicate_rules 0 1776129552590
 
 # HELP sigma_cli_failures Falhas sigma-cli
 # TYPE sigma_cli_failures gauge
-sigma_cli_failures 0 1776127937570
+sigma_cli_failures 0 1776129552590
 
 # HELP sigma_rules_by_severity Regras por severidade
 # TYPE sigma_rules_by_severity gauge
-sigma_rules_by_severity{severity="critical"} 0 1776127937570
-sigma_rules_by_severity{severity="high"} 2 1776127937570
-sigma_rules_by_severity{severity="medium"} 1 1776127937570
-sigma_rules_by_severity{severity="low"} 0 1776127937570
+sigma_rules_by_severity{severity="critical"} 0 1776129552590
+sigma_rules_by_severity{severity="high"} 2 1776129552590
+sigma_rules_by_severity{severity="medium"} 1 1776129552590
+sigma_rules_by_severity{severity="low"} 0 1776129552590
 
 # HELP sigma_rules_by_tactic Regras por tática
 # TYPE sigma_rules_by_tactic gauge
-sigma_rules_by_tactic{tactic="impact"} 1 1776127937570
-sigma_rules_by_tactic{tactic="lateral_movement"} 1 1776127937570
-sigma_rules_by_tactic{tactic="persistence"} 1 1776127937570
+sigma_rules_by_tactic{tactic="impact"} 1 1776129552590
+sigma_rules_by_tactic{tactic="lateral_movement"} 1 1776129552590
+sigma_rules_by_tactic{tactic="persistence"} 1 1776129552590
 
 # EOF

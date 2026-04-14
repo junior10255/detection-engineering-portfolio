@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
 """
-Detection Engineering Portfolio - Xtreme v18.6 (Precision & Confidence Edition)
-================================================================================
-- Correção: heuristic_weights adicionado ao DEFAULT_CONFIG
-- Ajuste fino: remote_execution_boost = 12 (evita viés)
-- Penalização contextual: wmic local reduz score de lateral_movement
-- Parsing avançado da detecção (operadores Sigma)
-- Confidence score (0-100) baseado na margem de decisão
-- Qualidade: penalidade para descrições genéricas
+Detection Engineering Portfolio - Xtreme v19.0 (MITRE STIX Integration)
+=======================================================================
+- Carrega mapeamento MITRE ATT&CK via STIX (attackcti)
+- Fallback para id_to_tactic manual se offline
+- Suporte a subtécnicas e múltiplas táticas por técnica
+- Cache local em mitre_cache.json
 """
 
 from __future__ import annotations
@@ -30,7 +28,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional, Set, Tuple, Dict, List, Union, Any
 
-SCRIPT_VERSION = "18.6"
+SCRIPT_VERSION = "19.0"
 SCRIPT_NAME = Path(__file__).name
 
 # =============================================================================
@@ -54,7 +52,7 @@ def setup_logging(ci_mode: bool = False) -> None:
 logger = logging.getLogger(__name__)
 
 # =============================================================================
-# Configuração (com ajustes e adição de heuristic_weights)
+# Configuração (id_to_tactic mantido como fallback)
 # =============================================================================
 
 DEFAULT_CONFIG: dict = {
@@ -72,6 +70,7 @@ DEFAULT_CONFIG: dict = {
         "exfiltration", "impact",
     ],
     "extra_folders": ["research/pocs", "img", "tools", "audit", "duplicates"],
+    # Fallback manual (usado apenas se MITRE STIX falhar)
     "id_to_tactic": {
         "t1595": "reconnaissance",   "t1566": "initial_access",
         "t1059": "execution",        "t1047": "execution",
@@ -81,7 +80,7 @@ DEFAULT_CONFIG: dict = {
         "t1087": "discovery",        "t1082": "discovery",
         "t1485": "impact",           "t1071": "command_and_control",
     },
-    # Heurística de fallback (agora presente)
+    # Heurística de fallback
     "heuristic_weights": {
         "credential_access": [["lsass", 3], ["mimikatz", 4], ["password", 1]],
         "lateral_movement":  [["psexec", 4], ["smb", 2],     ["rpc", 1]],
@@ -96,9 +95,8 @@ DEFAULT_CONFIG: dict = {
     "tactic_score_keyword": 5,
     "tactic_score_detection": 8,
     "network_context_weight": 5,
-    "remote_execution_boost": 12,        # Reduzido de 20 para 12
-    "local_execution_penalty": -5,       # Penalidade para wmic local
-    # Palavras-chave específicas por tática
+    "remote_execution_boost": 12,
+    "local_execution_penalty": -5,
     "tactic_keywords": {
         "lateral_movement": ["lateral", "remote", "psexec", "wmic", "node:", "\\\\", "smb", "rpc"],
         "credential_access": ["lsass", "mimikatz", "dump", "credential", "sam", "ntds"],
@@ -116,7 +114,6 @@ DEFAULT_CONFIG: dict = {
         "description": 20, "author": 10, "falsepositives": 15,
         "references":  10, "tags": 25,   "id": 20,
     },
-    # Penalidades de qualidade
     "quality_generic_description_penalty": -5,
     "quality_min_description_length": 30,
 }
@@ -132,6 +129,70 @@ def load_config(config_path: Path) -> dict:
         _safe_write(config_path, yaml.dump(cfg, allow_unicode=True, sort_keys=False))
         logger.info("config.yaml criado com defaults em %s", config_path)
     return cfg
+
+# =============================================================================
+# MITRE ATT&CK Live Mapping (via STIX)
+# =============================================================================
+
+def load_mitre_stix_mapping(cache_path: Path) -> Dict[str, List[str]]:
+    """
+    Carrega o mapeamento de técnicas MITRE (ID → táticas) usando attackcti.
+    Em caso de sucesso, salva em cache para execuções futuras.
+    Se falhar, retorna dicionário vazio.
+    """
+    # Tenta carregar do cache primeiro
+    if cache_path.exists():
+        try:
+            with open(cache_path, "r", encoding="utf-8") as f:
+                cached = json.load(f)
+                logger.info("MITRE mapping carregado do cache (%d técnicas)", len(cached))
+                return cached
+        except Exception as e:
+            logger.warning("Cache MITRE corrompido, será recriado: %s", e)
+
+    try:
+        from attackcti import attack_client
+        logger.info("Conectando ao MITRE ATT&CK via STIX (attackcti)...")
+        lift = attack_client()
+        techniques = lift.get_techniques()
+        mapping: Dict[str, List[str]] = {}
+        for t in techniques:
+            # ID externo (ex.: T1059)
+            ext_refs = t.get("external_references", [])
+            if not ext_refs:
+                continue
+            ext_id = ext_refs[0].get("external_id", "").lower()
+            if not ext_id.startswith("t"):
+                continue
+            # Fases (táticas) associadas
+            phases = [p["phase_name"] for p in t.get("kill_chain_phases", [])]
+            # Mapeia nome da fase para o formato usado no script (underscore)
+            tactic_names = [p.replace("-", "_") for p in phases]
+            mapping[ext_id] = tactic_names
+        # Salva cache
+        with open(cache_path, "w", encoding="utf-8") as f:
+            json.dump(mapping, f, indent=2)
+        logger.info("MITRE mapping carregado via STIX: %d técnicas", len(mapping))
+        return mapping
+    except ImportError:
+        logger.warning("attackcti não instalado. Use: pip install attackcti")
+        return {}
+    except Exception as e:
+        logger.error("Falha ao carregar MITRE STIX: %s", e)
+        return {}
+
+def get_mitre_mapping(base: Path, cfg: dict) -> Dict[str, List[str]]:
+    """
+    Obtém o mapeamento MITRE (técnica → lista de táticas).
+    Prioridade: STIX (cache) → fallback manual (id_to_tactic).
+    """
+    stix_map = load_mitre_stix_mapping(base / "mitre_cache.json")
+    if stix_map:
+        return stix_map
+    logger.warning("Usando mapeamento MITRE manual (fallback).")
+    manual_map = cfg.get("id_to_tactic", {})
+    # Converte para lista de táticas (consistente com STIX)
+    return {tid: [tactic] for tid, tactic in manual_map.items()}
 
 # =============================================================================
 # Stats (thread-safe)
@@ -312,20 +373,14 @@ def compute_content_hash(path: Path, cache: Optional[HashCache] = None) -> str:
     return file_hash
 
 # =============================================================================
-# Classificação Tática Inteligente (v18.6 com penalização e confiança)
+# Classificação Tática Inteligente (com MITRE STIX)
 # =============================================================================
 
 def extract_text_from_detection(detection: Any) -> str:
-    """
-    Extrai texto relevante da seção 'detection', entendendo operadores Sigma
-    como 'contains', 'endswith', 're', etc.
-    """
     texts = []
-
     def recurse(obj: Any, parent_key: str = "") -> None:
         if isinstance(obj, dict):
             for k, v in obj.items():
-                # Se a chave for um operador Sigma, extraímos os valores
                 if k in ("contains", "endswith", "startswith", "re", "all", "any"):
                     if isinstance(v, list):
                         for item in v:
@@ -340,26 +395,18 @@ def extract_text_from_detection(detection: Any) -> str:
                 recurse(item, parent_key)
         elif isinstance(obj, str):
             texts.append(obj.lower())
-
     recurse(detection)
     return " ".join(texts)
 
-
 def score_tactics_from_data(data: dict, cfg: dict, tags_found: List[str]) -> Dict[str, int]:
-    """
-    Calcula pontuação para cada tática com base em tags, keywords, detecção e contexto.
-    Inclui penalizações para falsos positivos.
-    """
     scores = {t: 0 for t in cfg["mitre_tactics"]}
     scores["uncategorized"] = 0
 
-    # 1. Tags MITRE
     tag_score = cfg.get("tactic_score_tag", 10)
     for tactic in tags_found:
         if tactic in scores:
             scores[tactic] += tag_score
 
-    # 2. Título e descrição
     title = str(data.get("title", "")).lower()
     desc = str(data.get("description", "")).lower()
     combined_text = f"{title} {desc}"
@@ -370,7 +417,6 @@ def score_tactics_from_data(data: dict, cfg: dict, tags_found: List[str]) -> Dic
             if kw in combined_text:
                 scores[tactic] += kw_score
 
-    # 3. Lógica de detecção (com parsing avançado)
     detection_text = extract_text_from_detection(data.get("detection", {}))
     det_score = cfg.get("tactic_score_detection", 8)
     for tactic, keywords in keywords_map.items():
@@ -378,7 +424,6 @@ def score_tactics_from_data(data: dict, cfg: dict, tags_found: List[str]) -> Dic
             if kw in detection_text:
                 scores[tactic] += det_score
 
-    # 4. Contexto de rede
     network_indicators = ["/node:", "\\\\\\\\", "\\\\", "remote", "smb", "rpc"]
     if any(ind in detection_text for ind in network_indicators):
         net_weight = cfg.get("network_context_weight", 5)
@@ -386,32 +431,23 @@ def score_tactics_from_data(data: dict, cfg: dict, tags_found: List[str]) -> Dic
         scores["exfiltration"] += net_weight // 2
         scores["command_and_control"] += net_weight // 2
 
-    # 5. Boost/Penalidade para wmic
     if "wmic" in detection_text:
         if "/node:" in detection_text or "\\\\" in detection_text:
             scores["lateral_movement"] += cfg.get("remote_execution_boost", 12)
         else:
-            # Penalidade: wmic local não é lateral movement
             penalty = cfg.get("local_execution_penalty", -5)
             scores["lateral_movement"] += penalty
-            # Garante que não fique negativo (opcional)
             scores["lateral_movement"] = max(0, scores["lateral_movement"])
 
-    # 6. Credential access
     cred_indicators = ["lsass", "sam", "ntds", "credential", "mimikatz"]
     if any(ind in detection_text for ind in cred_indicators):
         scores["credential_access"] += det_score
 
     return scores
 
-
 def determine_primary_tactics_with_confidence(
     data: dict, cfg: dict, tags_found: List[str]
 ) -> Tuple[List[str], float]:
-    """
-    Retorna (lista de táticas com maior score, confiança 0-100).
-    A confiança é baseada na diferença percentual entre o primeiro e o segundo colocado.
-    """
     scores = score_tactics_from_data(data, cfg, tags_found)
     if not scores or max(scores.values()) == 0:
         return ["uncategorized"], 0.0
@@ -420,7 +456,6 @@ def determine_primary_tactics_with_confidence(
     max_score = sorted_items[0][1]
     second_score = sorted_items[1][1] if len(sorted_items) > 1 else 0
 
-    # Confiança: diferença normalizada (0 se empate, 100 se segundo é zero)
     if max_score == 0:
         confidence = 0.0
     else:
@@ -429,9 +464,8 @@ def determine_primary_tactics_with_confidence(
     primary = [t for t, s in sorted_items if s == max_score]
     return primary, round(confidence, 2)
 
-
 # =============================================================================
-# Parsing Sigma (com qualidade refinada)
+# Parsing Sigma (com MITRE STIX)
 # =============================================================================
 
 def _apply_heuristic(data: dict, cfg: dict) -> str:
@@ -448,9 +482,7 @@ def _apply_heuristic(data: dict, cfg: dict) -> str:
     best = max(scores, key=scores.get)
     return best if scores[best] >= min_score else "uncategorized"
 
-
 def compute_quality_score(data: dict, cfg: dict) -> float:
-    """Calcula score de qualidade com penalidades para descrições genéricas."""
     bonus = cfg["quality_bonus"]
     max_score = cfg["max_quality_score"]
     raw_score = 0
@@ -464,7 +496,6 @@ def compute_quality_score(data: dict, cfg: dict) -> float:
                     raw_score += pts
                 elif desc_len >= 20:
                     raw_score += pts // 2
-                # Penalidade para descrições muito genéricas (ex.: "Detects X")
                 if desc_len < 40 and re.search(r"detect(s)?\s+\w+", val, re.I):
                     raw_score += cfg.get("quality_generic_description_penalty", -5)
         elif field == "falsepositives":
@@ -480,7 +511,6 @@ def compute_quality_score(data: dict, cfg: dict) -> float:
     score = min(max_score, max(0, raw_score))
     return round((score / max_score) * 100, 2)
 
-
 def parse_sigma(
     path: Path,
     cfg: dict,
@@ -488,6 +518,7 @@ def parse_sigma(
     seen_hashes: Set[str],
     hash_lock: threading.Lock,
     hash_cache: HashCache,
+    mitre_map: Dict[str, List[str]],
 ) -> Tuple[Optional[dict], str]:
     max_bytes = int(cfg["max_file_size_mb"] * 1024 * 1024)
     if path.stat().st_size > max_bytes:
@@ -535,12 +566,9 @@ def parse_sigma(
     category = ls_raw.get("category", "any")
     logsource = f"{product}/{service}/{category}".lower()
 
-    # Qualidade refinada
     score_percent = compute_quality_score(data, cfg)
 
-    # Táticas via tags
-    id_map: dict   = cfg["id_to_tactic"]
-    mitre_list: list = cfg["mitre_tactics"]
+    # Táticas via tags (usando MITRE STIX)
     tags = data.get("tags") or []
     found_tactics = []
     technique = None
@@ -548,26 +576,27 @@ def parse_sigma(
         for tag in tags:
             tl = str(tag).lower()
             if "attack.t" in tl:
+                # Extrai técnica base (ex.: t1059.001 → t1059)
                 m = re.search(r"t\d{4}(?:\.\d{3})?", tl)
                 if m:
-                    tid = m.group().split('.')[0]
-                    technique = m.group()
-                    if tid in id_map:
-                        found_tactics.append(id_map[tid])
+                    tid_full = m.group()
+                    tid_base = tid_full.split('.')[0]
+                    technique = tid_full
+                    # Busca no mapa STIX (fallback para manual)
+                    if tid_base in mitre_map:
+                        found_tactics.extend(mitre_map[tid_base])
             elif "attack." in tl:
                 t_name = tl.split(".")[-1].replace("-", "_")
-                if t_name in mitre_list:
+                if t_name in cfg["mitre_tactics"]:
                     found_tactics.append(t_name)
 
     if not found_tactics:
         heuristic_tactic = _apply_heuristic(data, cfg)
         found_tactics = [heuristic_tactic]
 
-    # Determinação de táticas primárias com confiança
     primary_tactics, confidence = determine_primary_tactics_with_confidence(data, cfg, found_tactics)
 
     folder_name = extract_folder_name_from_data(data, path.stem)
-    # Para diretório, usa a primeira tática (ordem alfabética para consistência)
     dir_tactic = sorted(primary_tactics)[0] if primary_tactics else "uncategorized"
     rel_link = f"Sigma/{dir_tactic}/{folder_name}/{path.name}"
 
@@ -589,7 +618,6 @@ def parse_sigma(
     }
     stats.record(meta)
     return meta, "ok"
-
 
 # =============================================================================
 # sigma-cli
@@ -630,7 +658,7 @@ def validate_with_sigma_cli(path: Path, semaphore: threading.Semaphore) -> tuple
             return False, str(exc)
 
 # =============================================================================
-# Migração e Normalização (mantidas, com ajuste para tática lista)
+# Migração e Normalização
 # =============================================================================
 
 IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".svg"}
@@ -710,6 +738,7 @@ def collect_existing_rules(
     seen_hashes: Set[str],
     hash_lock: threading.Lock,
     hash_cache: HashCache,
+    mitre_map: Dict[str, List[str]],
 ) -> list[dict]:
     sigma_dir = base / "Sigma"
     if not sigma_dir.exists():
@@ -731,13 +760,13 @@ def collect_existing_rules(
                 continue
             for yf in rule_folder.iterdir():
                 if yf.is_file() and yf.suffix.lower() in YAML_EXTS:
-                    meta, _ = parse_sigma(yf, cfg, stats, seen_hashes, hash_lock, hash_cache)
+                    meta, _ = parse_sigma(yf, cfg, stats, seen_hashes, hash_lock, hash_cache, mitre_map)
                     if meta:
                         to_normalize.append((yf, meta))
 
         for yf in tactic_dir.iterdir():
             if yf.is_file() and yf.suffix.lower() in YAML_EXTS:
-                meta, reason = parse_sigma(yf, cfg, stats, seen_hashes, hash_lock, hash_cache)
+                meta, reason = parse_sigma(yf, cfg, stats, seen_hashes, hash_lock, hash_cache, mitre_map)
                 if meta:
                     to_migrate.append((yf, meta))
                 elif reason == "duplicate":
@@ -833,7 +862,7 @@ def organize_markdown(src: Path, base: Path) -> None:
     logger.info("Markdown movido: %s → research/pocs/", src.name)
 
 # =============================================================================
-# Métricas (considerando múltiplas táticas)
+# Métricas
 # =============================================================================
 
 def compute_metrics(inventory: list[dict], stats: Stats, cfg: dict) -> dict:
@@ -1057,6 +1086,7 @@ def process_repo(
     cfg: dict,
     ci_mode: bool,
     use_sigma_cli: bool,
+    mitre_map: Dict[str, List[str]],
 ) -> tuple[list[dict], Stats]:
     stats = Stats()
     seen_hashes: Set[str] = set()
@@ -1077,7 +1107,7 @@ def process_repo(
         "config.yaml", SCRIPT_NAME, ".gitignore", "inventory.md",
     }
 
-    inventory = collect_existing_rules(base, cfg, stats, seen_hashes, hash_lock, hash_cache)
+    inventory = collect_existing_rules(base, cfg, stats, seen_hashes, hash_lock, hash_cache, mitre_map)
 
     yaml_files, image_files, md_files = discover_files(base, ignored_dirs, ignored_files)
     logger.info(
@@ -1089,7 +1119,7 @@ def process_repo(
     duplicates_to_move: list[Path] = []
 
     def process_one(fp: Path) -> Optional[dict]:
-        meta, reason = parse_sigma(fp, cfg, stats, seen_hashes, hash_lock, hash_cache)
+        meta, reason = parse_sigma(fp, cfg, stats, seen_hashes, hash_lock, hash_cache, mitre_map)
         if meta is None:
             if reason == "duplicate":
                 with dup_lock:
@@ -1159,13 +1189,14 @@ def main() -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     cfg = load_config(output_dir / "config.yaml")
+    mitre_map = get_mitre_mapping(output_dir, cfg)
 
     combined_inventory: list[dict] = []
     combined_stats = Stats()
 
     for repo in repos:
         logger.info("── Repositório: %s", repo)
-        inventory, stats = process_repo(repo, cfg, args.ci, args.sigma_cli)
+        inventory, stats = process_repo(repo, cfg, args.ci, args.sigma_cli, mitre_map)
         if len(repos) > 1:
             for item in inventory:
                 item.setdefault("repo", repo.name)
