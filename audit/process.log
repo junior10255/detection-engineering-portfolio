@@ -103,3 +103,13 @@
 [INFO] 2026-04-13 22:19:12 Arquivos soltos: 0 YAML | 0 imagens | 0 markdown
 [INFO] 2026-04-13 22:19:12 Finalizado | Regras: 3 | Cobertura: 21.43% | Qualidade: 100.0% | Confiança: 39.97%
 [INFO] 2026-04-13 22:19:12 Gerados: README.md | inventory.md | metrics.json | metrics.prom | hash_cache.json
+[INFO] 2026-04-13 22:32:12 === Xtreme Organizer v20.0 | Modo: Normal ===
+[INFO] 2026-04-13 22:32:12 Config carregada: C:\Users\Junior\Documents\GitHub\detection-engineering-portfolio\config.yaml
+[WARNING] 2026-04-13 22:32:12 attackcti não instalado. Use: pip install attackcti
+[WARNING] 2026-04-13 22:32:12 Usando mapeamento MITRE manual (fallback).
+[INFO] 2026-04-13 22:32:12 ── Repositório: C:\Users\Junior\Documents\GitHub\detection-engineering-portfolio
+[INFO] 2026-04-13 22:32:12 Hash cache carregado: 7 entradas
+[INFO] 2026-04-13 22:32:12 Regras existentes: 3 (migradas: 0, normalizadas: 3)
+[INFO] 2026-04-13 22:32:12 Arquivos soltos: 0 YAML | 0 imagens | 0 markdown
+[INFO] 2026-04-13 22:32:12 Finalizado | Regras: 3 | Cobertura: 21.43% | Qualidade: 100.0% | Maturidade: 46.67% | Técnicas: 3
+[INFO] 2026-04-13 22:32:12 Gerados: README.md | inventory.md | metrics.json | metrics.prom | hash_cache.json
