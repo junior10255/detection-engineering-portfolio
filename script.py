@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-Detection Engineering Portfolio - Xtreme v19.0 (MITRE STIX Integration)
-=======================================================================
-- Carrega mapeamento MITRE ATT&CK via STIX (attackcti)
-- Fallback para id_to_tactic manual se offline
-- Suporte a subtécnicas e múltiplas táticas por técnica
-- Cache local em mitre_cache.json
+Detection Engineering Portfolio - Xtreme v20.0 (Threat-Informed Maturity Edition)
+=================================================================================
+- Cobertura por técnica MITRE (techniques_covered, distribuição)
+- Detection Maturity Score (0-100) baseado em técnica, validação, confiança, qualidade, PoC
+- Verificação automática de PoC (arquivos na pasta poc/)
+- Exibição de maturidade no README e inventory
 """
 
 from __future__ import annotations
@@ -28,7 +28,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional, Set, Tuple, Dict, List, Union, Any
 
-SCRIPT_VERSION = "19.0"
+SCRIPT_VERSION = "20.0"
 SCRIPT_NAME = Path(__file__).name
 
 # =============================================================================
@@ -52,7 +52,7 @@ def setup_logging(ci_mode: bool = False) -> None:
 logger = logging.getLogger(__name__)
 
 # =============================================================================
-# Configuração (id_to_tactic mantido como fallback)
+# Configuração
 # =============================================================================
 
 DEFAULT_CONFIG: dict = {
@@ -80,7 +80,6 @@ DEFAULT_CONFIG: dict = {
         "t1087": "discovery",        "t1082": "discovery",
         "t1485": "impact",           "t1071": "command_and_control",
     },
-    # Heurística de fallback
     "heuristic_weights": {
         "credential_access": [["lsass", 3], ["mimikatz", 4], ["password", 1]],
         "lateral_movement":  [["psexec", 4], ["smb", 2],     ["rpc", 1]],
@@ -90,7 +89,6 @@ DEFAULT_CONFIG: dict = {
         "execution":         [["cmd", 2], ["powershell", 2], ["wmic", 2], ["process", 1]],
     },
     "heuristic_min_score": 3,
-    # Pontuação para classificação tática
     "tactic_score_tag": 10,
     "tactic_score_keyword": 5,
     "tactic_score_detection": 8,
@@ -135,12 +133,6 @@ def load_config(config_path: Path) -> dict:
 # =============================================================================
 
 def load_mitre_stix_mapping(cache_path: Path) -> Dict[str, List[str]]:
-    """
-    Carrega o mapeamento de técnicas MITRE (ID → táticas) usando attackcti.
-    Em caso de sucesso, salva em cache para execuções futuras.
-    Se falhar, retorna dicionário vazio.
-    """
-    # Tenta carregar do cache primeiro
     if cache_path.exists():
         try:
             with open(cache_path, "r", encoding="utf-8") as f:
@@ -152,24 +144,20 @@ def load_mitre_stix_mapping(cache_path: Path) -> Dict[str, List[str]]:
 
     try:
         from attackcti import attack_client
-        logger.info("Conectando ao MITRE ATT&CK via STIX (attackcti)...")
+        logger.info("Conectando ao MITRE ATT&CK via STIX...")
         lift = attack_client()
         techniques = lift.get_techniques()
         mapping: Dict[str, List[str]] = {}
         for t in techniques:
-            # ID externo (ex.: T1059)
             ext_refs = t.get("external_references", [])
             if not ext_refs:
                 continue
             ext_id = ext_refs[0].get("external_id", "").lower()
             if not ext_id.startswith("t"):
                 continue
-            # Fases (táticas) associadas
             phases = [p["phase_name"] for p in t.get("kill_chain_phases", [])]
-            # Mapeia nome da fase para o formato usado no script (underscore)
             tactic_names = [p.replace("-", "_") for p in phases]
             mapping[ext_id] = tactic_names
-        # Salva cache
         with open(cache_path, "w", encoding="utf-8") as f:
             json.dump(mapping, f, indent=2)
         logger.info("MITRE mapping carregado via STIX: %d técnicas", len(mapping))
@@ -182,16 +170,11 @@ def load_mitre_stix_mapping(cache_path: Path) -> Dict[str, List[str]]:
         return {}
 
 def get_mitre_mapping(base: Path, cfg: dict) -> Dict[str, List[str]]:
-    """
-    Obtém o mapeamento MITRE (técnica → lista de táticas).
-    Prioridade: STIX (cache) → fallback manual (id_to_tactic).
-    """
     stix_map = load_mitre_stix_mapping(base / "mitre_cache.json")
     if stix_map:
         return stix_map
     logger.warning("Usando mapeamento MITRE manual (fallback).")
     manual_map = cfg.get("id_to_tactic", {})
-    # Converte para lista de táticas (consistente com STIX)
     return {tid: [tactic] for tid, tactic in manual_map.items()}
 
 # =============================================================================
@@ -373,7 +356,7 @@ def compute_content_hash(path: Path, cache: Optional[HashCache] = None) -> str:
     return file_hash
 
 # =============================================================================
-# Classificação Tática Inteligente (com MITRE STIX)
+# Classificação Tática Inteligente
 # =============================================================================
 
 def extract_text_from_detection(detection: Any) -> str:
@@ -465,7 +448,36 @@ def determine_primary_tactics_with_confidence(
     return primary, round(confidence, 2)
 
 # =============================================================================
-# Parsing Sigma (com MITRE STIX)
+# Maturidade da Regra
+# =============================================================================
+
+def has_poc_evidence(rule_dir: Path) -> bool:
+    """Verifica se a pasta poc/ contém arquivos além de .gitkeep."""
+    poc_dir = rule_dir / "poc"
+    if not poc_dir.exists():
+        return False
+    for item in poc_dir.iterdir():
+        if item.name != ".gitkeep":
+            return True
+    return False
+
+def compute_maturity(meta: dict, rule_dir: Path) -> int:
+    """Calcula o Detection Maturity Score (0-100)."""
+    score = 0
+    if meta.get("technique_id"):
+        score += 20
+    if meta.get("sigma_cli_valid"):
+        score += 20
+    if meta.get("confidence", 0) > 70:
+        score += 20
+    if meta.get("score_percent", 0) > 80:
+        score += 20
+    if has_poc_evidence(rule_dir):
+        score += 20
+    return score
+
+# =============================================================================
+# Parsing Sigma
 # =============================================================================
 
 def _apply_heuristic(data: dict, cfg: dict) -> str:
@@ -568,7 +580,7 @@ def parse_sigma(
 
     score_percent = compute_quality_score(data, cfg)
 
-    # Táticas via tags (usando MITRE STIX)
+    # Táticas via tags (MITRE STIX)
     tags = data.get("tags") or []
     found_tactics = []
     technique = None
@@ -576,13 +588,11 @@ def parse_sigma(
         for tag in tags:
             tl = str(tag).lower()
             if "attack.t" in tl:
-                # Extrai técnica base (ex.: t1059.001 → t1059)
                 m = re.search(r"t\d{4}(?:\.\d{3})?", tl)
                 if m:
                     tid_full = m.group()
                     tid_base = tid_full.split('.')[0]
                     technique = tid_full
-                    # Busca no mapa STIX (fallback para manual)
                     if tid_base in mitre_map:
                         found_tactics.extend(mitre_map[tid_base])
             elif "attack." in tl:
@@ -616,6 +626,7 @@ def parse_sigma(
         "sigma_cli_valid": None,
         "hash":            file_hash,
     }
+    # Maturidade será calculada depois que o diretório estiver criado
     stats.record(meta)
     return meta, "ok"
 
@@ -658,7 +669,7 @@ def validate_with_sigma_cli(path: Path, semaphore: threading.Semaphore) -> tuple
             return False, str(exc)
 
 # =============================================================================
-# Migração e Normalização
+# Migração e Normalização (com cálculo de maturidade)
 # =============================================================================
 
 IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".svg"}
@@ -669,6 +680,10 @@ def _get_dir_tactic(meta: dict) -> str:
     if isinstance(t, list):
         return sorted(t)[0] if t else "uncategorized"
     return t
+
+def _finalize_meta(meta: dict, rule_dir: Path) -> None:
+    """Calcula maturidade após o diretório estar criado."""
+    meta["maturity"] = compute_maturity(meta, rule_dir)
 
 def migrate_loose_rule(yf: Path, base: Path, meta: dict) -> Optional[dict]:
     tactic = _get_dir_tactic(meta)
@@ -686,6 +701,7 @@ def migrate_loose_rule(yf: Path, base: Path, meta: dict) -> Optional[dict]:
         logger.info("Migrado (solto): %s → Sigma/%s/%s/", yf.name, tactic, folder_name)
 
         meta["link"] = f"Sigma/{tactic}/{folder_name}/{dest_yml.name}"
+        _finalize_meta(meta, rule_dir)
         return meta
     except Exception as e:
         logger.error("Falha ao migrar %s: %s", yf.name, e)
@@ -700,6 +716,7 @@ def normalize_existing_rule(yf: Path, base: Path, meta: dict) -> Optional[dict]:
         poc_dir = current_parent / "poc"
         poc_dir.mkdir(exist_ok=True)
         (poc_dir / ".gitkeep").touch(exist_ok=True)
+        _finalize_meta(meta, current_parent)
         return meta
 
     try:
@@ -715,6 +732,7 @@ def normalize_existing_rule(yf: Path, base: Path, meta: dict) -> Optional[dict]:
         remove_empty_dir(current_parent)
 
         meta["link"] = f"Sigma/{tactic}/{meta['folder']}/{dest_yml.name}"
+        _finalize_meta(meta, expected_parent)
         return meta
     except Exception as e:
         logger.error("Falha ao normalizar %s: %s", yf.name, e)
@@ -836,6 +854,7 @@ def organize_file(src: Path, meta: dict, base: Path) -> None:
         return
     shutil.move(str(src), str(dest_yml))
     logger.info("Movido: %s → Sigma/%s/%s/", src.name, tactic, folder_name)
+    _finalize_meta(meta, rule_dir)
 
 def organize_image(src: Path, base: Path) -> None:
     img_dir = base / "img"
@@ -862,8 +881,19 @@ def organize_markdown(src: Path, base: Path) -> None:
     logger.info("Markdown movido: %s → research/pocs/", src.name)
 
 # =============================================================================
-# Métricas
+# Métricas (com cobertura por técnica e maturidade)
 # =============================================================================
+
+def compute_technique_metrics(inventory: list[dict]) -> dict:
+    technique_count: Dict[str, int] = {}
+    for item in inventory:
+        tid = item.get("technique_id")
+        if tid:
+            technique_count[tid] = technique_count.get(tid, 0) + 1
+    return {
+        "techniques_covered": len(technique_count),
+        "technique_distribution": technique_count,
+    }
 
 def compute_metrics(inventory: list[dict], stats: Stats, cfg: dict) -> dict:
     mitre_tactics: list = cfg["mitre_tactics"]
@@ -884,6 +914,7 @@ def compute_metrics(inventory: list[dict], stats: Stats, cfg: dict) -> dict:
     density     = round(total / tactics_covered, 2) if tactics_covered else 0.0
     avg_quality = round(sum(i["score_percent"] for i in inventory) / total, 2) if total else 0.0
     avg_confidence = round(sum(i.get("confidence", 0) for i in inventory) / total, 2) if total else 0.0
+    avg_maturity   = round(sum(i.get("maturity", 0) for i in inventory) / total, 2) if total else 0.0
     high_impact  = stats.severity["critical"] + stats.severity["high"]
     impact_ratio = round((high_impact / total) * 100, 2) if total else 0.0
 
@@ -902,12 +933,16 @@ def compute_metrics(inventory: list[dict], stats: Stats, cfg: dict) -> dict:
         for t, scores in tactic_quality.items()
     }
 
+    tech_metrics = compute_technique_metrics(inventory)
+
     return {
+        **tech_metrics,
         "global_coverage":       coverage,
         "active_density":        density,
         "high_impact_ratio":     impact_ratio,
         "average_quality":       avg_quality,
         "average_confidence":    avg_confidence,
+        "average_maturity":      avg_maturity,
         "total_rules":           total,
         "tactics_covered":       tactics_covered,
         "total_tactics":         n_mitre,
@@ -924,11 +959,18 @@ def compute_metrics(inventory: list[dict], stats: Stats, cfg: dict) -> dict:
     }
 
 # =============================================================================
-# README e Inventory
+# README e Inventory (com maturidade)
 # =============================================================================
 
 SEV_RANK  = {"critical": 4, "high": 3, "medium": 2, "low": 1}
 SEV_EMOJI = {"critical": "🔴", "high": "🟠", "medium": "🟡", "low": "🔵"}
+MATURITY_EMOJI = {range(0, 40): "🔴", range(40, 70): "🟡", range(70, 101): "🟢"}
+
+def _get_maturity_emoji(score: int) -> str:
+    for rng, emoji in MATURITY_EMOJI.items():
+        if score in rng:
+            return emoji
+    return "⚪"
 
 def _get_display_tactic(item: dict) -> str:
     t = item["tactic"]
@@ -942,13 +984,15 @@ def render_inventory(inventory: list[dict]) -> str:
         key=lambda x: (SEV_RANK.get(x["level"], 0), x["score_percent"]),
         reverse=True,
     )
-    table  = "| Nível | Tática(s) | Regra | Qualidade | Conf. | Link |\n"
-    table += "|:---:|:---|:---|:---:|:---:|:---:|\n"
+    table  = "| Nível | Tática(s) | Regra | Qualidade | Conf. | Mat. | Link |\n"
+    table += "|:---:|:---|:---|:---:|:---:|:---:|:---:|\n"
     for item in sorted_inv:
         em    = SEV_EMOJI.get(item["level"], "⚪")
         title = _get_display_tactic(item)
         conf  = item.get("confidence", 0)
-        table += f"| {em} | {title} | `{item['file']}` | {item['score_percent']}% | {conf:.0f}% | [📄 Ver]({item['link']}) |\n"
+        mat   = item.get("maturity", 0)
+        mat_em = _get_maturity_emoji(mat)
+        table += f"| {em} | {title} | `{item['file']}` | {item['score_percent']}% | {conf:.0f}% | {mat_em} {mat} | [📄 Ver]({item['link']}) |\n"
     return f"""# 📋 Inventário Completo de Regras Sigma
 
 **Total de regras:** {len(inventory)}
@@ -964,6 +1008,7 @@ def render_readme(metrics: dict, inventory: list[dict], max_display: int = 30) -
     impact  = metrics["high_impact_ratio"]
     quality = metrics["average_quality"]
     confid  = metrics.get("average_confidence", 0)
+    matur   = metrics.get("average_maturity", 0)
     total   = metrics["total_rules"]
     covered = metrics["tactics_covered"]
     n_mitre = metrics["total_tactics"]
@@ -971,6 +1016,8 @@ def render_readme(metrics: dict, inventory: list[dict], max_display: int = 30) -
     dups    = metrics["duplicate_rules"]
     missing = metrics["missing_tactics"]
     qual_tac = metrics["tactic_quality"]
+    tech_cov = metrics.get("techniques_covered", 0)
+    tech_dist = metrics.get("technique_distribution", {})
 
     sorted_inv = sorted(
         inventory,
@@ -979,13 +1026,15 @@ def render_readme(metrics: dict, inventory: list[dict], max_display: int = 30) -
     )
     display_inv = sorted_inv[:max_display]
 
-    table  = "| Nível | Tática(s) | Regra | Qualidade | Conf. | Link |\n"
-    table += "|:---:|:---|:---|:---:|:---:|:---:|\n"
+    table  = "| Nível | Tática(s) | Regra | Qualidade | Conf. | Mat. | Link |\n"
+    table += "|:---:|:---|:---|:---:|:---:|:---:|:---:|\n"
     for item in display_inv:
         em    = SEV_EMOJI.get(item["level"], "⚪")
         title = _get_display_tactic(item)
         conf  = item.get("confidence", 0)
-        table += f"| {em} | {title} | `{item['file']}` | {item['score_percent']}% | {conf:.0f}% | [📄 Ver]({item['link']}) |\n"
+        mat   = item.get("maturity", 0)
+        mat_em = _get_maturity_emoji(mat)
+        table += f"| {em} | {title} | `{item['file']}` | {item['score_percent']}% | {conf:.0f}% | {mat_em} {mat} | [📄 Ver]({item['link']}) |\n"
 
     remaining = total - len(display_inv)
     note = ""
@@ -995,6 +1044,12 @@ def render_readme(metrics: dict, inventory: list[dict], max_display: int = 30) -
     qual_table = "| Tática | Qualidade Média |\n|:---|:---:|\n"
     for t in sorted(qual_tac.keys()):
         qual_table += f"| {t.replace('_',' ').title()} | {qual_tac[t]}% |\n"
+
+    # Top 10 técnicas
+    top_tech = sorted(tech_dist.items(), key=lambda x: x[1], reverse=True)[:10]
+    tech_table = "| Técnica MITRE | Ocorrências |\n|:---|:---:|\n"
+    for tech, count in top_tech:
+        tech_table += f"| `{tech.upper()}` | {count} |\n"
 
     gaps = (
         "## 🚨 Coverage Gaps\n" + "".join(f"- {t.replace('_',' ').title()}\n" for t in missing)
@@ -1008,16 +1063,23 @@ def render_readme(metrics: dict, inventory: list[dict], max_display: int = 30) -
 ![High Impact](https://img.shields.io/badge/High%20Impact-{impact}%25-red)
 ![Avg Quality](https://img.shields.io/badge/Avg%20Quality-{quality}%25-yellow)
 ![Avg Confidence](https://img.shields.io/badge/Avg%20Confidence-{confid:.0f}%25-green)
+![Avg Maturity](https://img.shields.io/badge/Avg%20Maturity-{matur:.0f}%25-blue)
+![Techniques](https://img.shields.io/badge/Techniques%20Covered-{tech_cov}-lightgrey)
 
 ## 📊 Executive Insights
 - **Total de Regras:** {total}
 - **Táticas Cobertas:** {covered} / {n_mitre}
+- **Técnicas MITRE Cobertas:** {tech_cov}
 - **Densidade Real:** {density} regras por tática ativa
 - **Qualidade Média:** {quality}%
 - **Confiança Média:** {confid:.0f}%
+- **Maturidade Média:** {matur:.0f}%
 - **Regras Inválidas:** {invalid}
 - **Regras Duplicadas Ignoradas:** {dups}
 - **Impacto Alto (Critical/High):** {impact}% das regras
+
+## 🔬 Top Técnicas MITRE
+{tech_table}
 
 ## 📈 Qualidade por Tática
 {qual_table}
@@ -1052,7 +1114,9 @@ def render_openmetrics(metrics: dict) -> str:
     add("sigma_rules_total",       "Total de regras Sigma",                     metrics["total_rules"])
     add("sigma_coverage_percent",  "Cobertura MITRE",                           metrics["global_coverage"])
     add("sigma_quality_average",   "Qualidade média",                           metrics["average_quality"])
-    add("sigma_confidence_average","Confiança média da classificação",          metrics.get("average_confidence", 0))
+    add("sigma_confidence_average","Confiança média",                           metrics.get("average_confidence", 0))
+    add("sigma_maturity_average",  "Maturidade média",                          metrics.get("average_maturity", 0))
+    add("sigma_techniques_covered","Técnicas MITRE únicas cobertas",            metrics.get("techniques_covered", 0))
     add("sigma_high_impact_ratio", "Percentual Critical/High",                  metrics["high_impact_ratio"])
     add("sigma_active_density",    "Densidade ativa",                           metrics["active_density"])
     add("sigma_invalid_rules",     "Regras inválidas",                          metrics["invalid_rules"])
@@ -1227,9 +1291,10 @@ def main() -> None:
         _safe_write(output_dir / "README.md", render_readme(metrics, combined_inventory, max_display))
         _safe_write(output_dir / "inventory.md", render_inventory(combined_inventory))
 
-    logger.info("Finalizado | Regras: %d | Cobertura: %s%% | Qualidade: %s%% | Confiança: %s%%",
+    logger.info("Finalizado | Regras: %d | Cobertura: %s%% | Qualidade: %s%% | Maturidade: %s%% | Técnicas: %d",
                 metrics["total_rules"], metrics["global_coverage"],
-                metrics["average_quality"], metrics.get("average_confidence", 0))
+                metrics["average_quality"], metrics.get("average_maturity", 0),
+                metrics.get("techniques_covered", 0))
     if not args.ci:
         logger.info("Gerados: README.md | inventory.md | metrics.json | metrics.prom | hash_cache.json")
 

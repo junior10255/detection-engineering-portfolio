@@ -1,9 +1,16 @@
 {
+    "techniques_covered": 3,
+    "technique_distribution": {
+        "t1490": 1,
+        "t1021.006": 1,
+        "t1547.001": 1
+    },
     "global_coverage": 21.43,
     "active_density": 1.0,
     "high_impact_ratio": 66.67,
     "average_quality": 100.0,
     "average_confidence": 39.97,
+    "average_maturity": 46.67,
     "total_rules": 3,
     "tactics_covered": 3,
     "total_tactics": 14,
@@ -46,5 +53,5 @@
         "windows/any/process_creation": 2,
         "windows/any/registry_event": 1
     },
-    "last_update": "2026-04-13T22:19:12.588167"
+    "last_update": "2026-04-13T22:32:12.065459"
 }
