@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 """
-Detection Engineering Portfolio - Xtreme v20.0 (Threat-Informed Maturity Edition)
-=================================================================================
-- Cobertura por técnica MITRE (techniques_covered, distribuição)
-- Detection Maturity Score (0-100) baseado em técnica, validação, confiança, qualidade, PoC
-- Verificação automática de PoC (arquivos na pasta poc/)
-- Exibição de maturidade no README e inventory
+Detection Engineering Portfolio - Xtreme v20.2 (Robust Sigma-CLI Detection)
+=======================================================================
+- Detecção aprimorada do sigma-cli (usa shutil.which)
+- Opção de configurar caminho manual: sigma_executable
+- Logs claros de disponibilidade do sigma-cli
 """
 
 from __future__ import annotations
@@ -28,7 +27,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional, Set, Tuple, Dict, List, Union, Any
 
-SCRIPT_VERSION = "20.0"
+SCRIPT_VERSION = "20.2"
 SCRIPT_NAME = Path(__file__).name
 
 # =============================================================================
@@ -61,6 +60,7 @@ DEFAULT_CONFIG: dict = {
     "ci_min_coverage": 50,
     "ci_min_quality": 70,
     "sigma_semaphore": 2,
+    "sigma_executable": "sigma",       # Caminho ou comando para o sigma-cli
     "add_tactic_gitkeep": True,
     "max_rules_in_readme": 30,
     "mitre_tactics": [
@@ -452,7 +452,6 @@ def determine_primary_tactics_with_confidence(
 # =============================================================================
 
 def has_poc_evidence(rule_dir: Path) -> bool:
-    """Verifica se a pasta poc/ contém arquivos além de .gitkeep."""
     poc_dir = rule_dir / "poc"
     if not poc_dir.exists():
         return False
@@ -462,7 +461,6 @@ def has_poc_evidence(rule_dir: Path) -> bool:
     return False
 
 def compute_maturity(meta: dict, rule_dir: Path) -> int:
-    """Calcula o Detection Maturity Score (0-100)."""
     score = 0
     if meta.get("technique_id"):
         score += 20
@@ -626,37 +624,71 @@ def parse_sigma(
         "sigma_cli_valid": None,
         "hash":            file_hash,
     }
-    # Maturidade será calculada depois que o diretório estiver criado
     stats.record(meta)
     return meta, "ok"
 
 # =============================================================================
-# sigma-cli
+# sigma-cli (DETECÇÃO ROBUSTA)
 # =============================================================================
 
 _SIGMA_CLI_AVAILABLE: Optional[bool] = None
 _SIGMA_CLI_LOCK = threading.Lock()
+_SIGMA_EXECUTABLE_PATH: Optional[str] = None
 
-def _check_sigma_cli() -> bool:
-    global _SIGMA_CLI_AVAILABLE
+def _find_sigma_executable(cfg: dict) -> Optional[str]:
+    """Encontra o executável do sigma-cli."""
+    # 1. Caminho especificado na configuração
+    sigma_cmd = cfg.get("sigma_executable", "sigma")
+    if sigma_cmd != "sigma":
+        # Se não for o nome padrão, assume que é um caminho completo
+        if Path(sigma_cmd).exists():
+            return sigma_cmd
+        else:
+            logger.warning(f"Caminho sigma_executable '{sigma_cmd}' não encontrado.")
+            return None
+
+    # 2. Procura no PATH usando shutil.which
+    found = shutil.which("sigma")
+    if found:
+        return found
+
+    # 3. Tentativa adicional em diretórios comuns (Windows)
+    if os.name == 'nt':
+        local_app_data = os.environ.get("LOCALAPPDATA", "")
+        possible = Path(local_app_data) / "Python" / "pythoncore-3.14-64" / "Scripts" / "sigma.exe"
+        if possible.exists():
+            return str(possible)
+
+    return None
+
+def _check_sigma_cli(cfg: dict) -> bool:
+    global _SIGMA_CLI_AVAILABLE, _SIGMA_EXECUTABLE_PATH
     with _SIGMA_CLI_LOCK:
         if _SIGMA_CLI_AVAILABLE is None:
-            try:
-                subprocess.run(["sigma", "--version"], capture_output=True, timeout=5, check=False)
-                _SIGMA_CLI_AVAILABLE = True
-                logger.info("sigma-cli detectado")
-            except (FileNotFoundError, subprocess.TimeoutExpired):
+            sigma_path = _find_sigma_executable(cfg)
+            if sigma_path:
+                try:
+                    # Testa se o executável funciona
+                    subprocess.run([sigma_path, "version"], capture_output=True, timeout=5, check=False)
+                    _SIGMA_CLI_AVAILABLE = True
+                    _SIGMA_EXECUTABLE_PATH = sigma_path
+                    logger.info("sigma-cli detectado: %s", sigma_path)
+                except Exception as e:
+                    logger.warning("sigma-cli encontrado mas falhou ao executar: %s", e)
+                    _SIGMA_CLI_AVAILABLE = False
+            else:
+                logger.warning("sigma-cli não encontrado. Instale com: pip install sigma-cli")
                 _SIGMA_CLI_AVAILABLE = False
-                logger.warning("sigma-cli não encontrado")
     return bool(_SIGMA_CLI_AVAILABLE)
 
-def validate_with_sigma_cli(path: Path, semaphore: threading.Semaphore) -> tuple[bool, str]:
-    if not _check_sigma_cli():
+def validate_with_sigma_cli(path: Path, cfg: dict, semaphore: threading.Semaphore) -> tuple[bool, str]:
+    if not _check_sigma_cli(cfg):
         return True, "sigma-cli indisponível"
+    sigma_exe = _SIGMA_EXECUTABLE_PATH or cfg.get("sigma_executable", "sigma")
     with semaphore:
         try:
             result = subprocess.run(
-                ["sigma", "check", str(path)],
+                [sigma_exe, "check", str(path)],
                 capture_output=True, text=True, timeout=15, check=False,
             )
             if result.returncode == 0:
@@ -669,7 +701,7 @@ def validate_with_sigma_cli(path: Path, semaphore: threading.Semaphore) -> tuple
             return False, str(exc)
 
 # =============================================================================
-# Migração e Normalização (com cálculo de maturidade)
+# Migração e Normalização
 # =============================================================================
 
 IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".svg"}
@@ -682,7 +714,6 @@ def _get_dir_tactic(meta: dict) -> str:
     return t
 
 def _finalize_meta(meta: dict, rule_dir: Path) -> None:
-    """Calcula maturidade após o diretório estar criado."""
     meta["maturity"] = compute_maturity(meta, rule_dir)
 
 def migrate_loose_rule(yf: Path, base: Path, meta: dict) -> Optional[dict]:
@@ -881,7 +912,7 @@ def organize_markdown(src: Path, base: Path) -> None:
     logger.info("Markdown movido: %s → research/pocs/", src.name)
 
 # =============================================================================
-# Métricas (com cobertura por técnica e maturidade)
+# Métricas
 # =============================================================================
 
 def compute_technique_metrics(inventory: list[dict]) -> dict:
@@ -959,7 +990,7 @@ def compute_metrics(inventory: list[dict], stats: Stats, cfg: dict) -> dict:
     }
 
 # =============================================================================
-# README e Inventory (com maturidade)
+# README e Inventory
 # =============================================================================
 
 SEV_RANK  = {"critical": 4, "high": 3, "medium": 2, "low": 1}
@@ -1190,7 +1221,7 @@ def process_repo(
                     duplicates_to_move.append(fp)
             return None
         if use_sigma_cli:
-            valid, msg = validate_with_sigma_cli(fp, semaphore)
+            valid, msg = validate_with_sigma_cli(fp, cfg, semaphore)
             meta["sigma_cli_valid"] = valid
             if not valid:
                 stats.increment_sigma_failure()
