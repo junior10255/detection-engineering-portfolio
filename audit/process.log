@@ -113,3 +113,13 @@
 [INFO] 2026-04-13 22:32:12 Arquivos soltos: 0 YAML | 0 imagens | 0 markdown
 [INFO] 2026-04-13 22:32:12 Finalizado | Regras: 3 | Cobertura: 21.43% | Qualidade: 100.0% | Maturidade: 46.67% | Técnicas: 3
 [INFO] 2026-04-13 22:32:12 Gerados: README.md | inventory.md | metrics.json | metrics.prom | hash_cache.json
+[INFO] 2026-04-13 22:36:46 === Xtreme Organizer v20.0 | Modo: Normal ===
+[INFO] 2026-04-13 22:36:46 Config carregada: C:\Users\Junior\Documents\GitHub\detection-engineering-portfolio\config.yaml
+[INFO] 2026-04-13 22:36:48 Conectando ao MITRE ATT&CK via STIX...
+[INFO] 2026-04-13 22:36:57 MITRE mapping carregado via STIX: 898 técnicas
+[INFO] 2026-04-13 22:36:57 ── Repositório: C:\Users\Junior\Documents\GitHub\detection-engineering-portfolio
+[INFO] 2026-04-13 22:36:57 Hash cache carregado: 7 entradas
+[INFO] 2026-04-13 22:36:57 Regras existentes: 3 (migradas: 0, normalizadas: 3)
+[INFO] 2026-04-13 22:36:57 Arquivos soltos: 0 YAML | 0 imagens | 0 markdown
+[INFO] 2026-04-13 22:36:57 Finalizado | Regras: 3 | Cobertura: 21.43% | Qualidade: 100.0% | Maturidade: 40.0% | Técnicas: 3
+[INFO] 2026-04-13 22:36:57 Gerados: README.md | inventory.md | metrics.json | metrics.prom | hash_cache.json

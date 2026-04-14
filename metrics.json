@@ -9,8 +9,8 @@
     "active_density": 1.0,
     "high_impact_ratio": 66.67,
     "average_quality": 100.0,
-    "average_confidence": 39.97,
-    "average_maturity": 46.67,
+    "average_confidence": 37.04,
+    "average_maturity": 40.0,
     "total_rules": 3,
     "tactics_covered": 3,
     "total_tactics": 14,
@@ -53,5 +53,5 @@
         "windows/any/process_creation": 2,
         "windows/any/registry_event": 1
     },
-    "last_update": "2026-04-13T22:32:12.065459"
+    "last_update": "2026-04-13T22:36:57.535695"
 }
