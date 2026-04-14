@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """
-Detection Engineering Portfolio - Xtreme v18.2 (Hygiene Edition)
-==================================================================
-- Normaliza subpastas de regras para o nome derivado do título
-- Remove pastas vazias após migração
-- Opção de .gitkeep nas táticas (melhora visualização no GitHub)
-- Higienização completa da estrutura Sigma/
+Detection Engineering Portfolio - Xtreme v18.3 (Professional Edition)
+=====================================================================
+- README executivo: TOP N regras (padrão 30)
+- inventory.md com lista completa
+- Higienização total da estrutura Sigma/
+- Normalização de subpastas pelo título
+- Hash cache, thread‑safety, sigma‑cli opcional
 """
 
 from __future__ import annotations
@@ -28,7 +29,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional, Set, Tuple, Dict
 
-SCRIPT_VERSION = "18.2"
+SCRIPT_VERSION = "18.3"
 SCRIPT_NAME = Path(__file__).name
 
 # =============================================================================
@@ -61,7 +62,8 @@ DEFAULT_CONFIG: dict = {
     "ci_min_coverage": 50,
     "ci_min_quality": 70,
     "sigma_semaphore": 2,
-    "add_tactic_gitkeep": True,   # Cria .gitkeep na raiz de cada tática para evitar colapso no GitHub
+    "add_tactic_gitkeep": True,
+    "max_rules_in_readme": 30,
     "mitre_tactics": [
         "reconnaissance", "resource_development", "initial_access", "execution",
         "persistence", "privilege_escalation", "defense_evasion", "credential_access",
@@ -197,7 +199,6 @@ def is_relative_to(path: Path, parent: Path) -> bool:
         return False
 
 def remove_empty_dir(path: Path) -> None:
-    """Remove diretório se estiver vazio (apenas .gitkeep é considerado vazio)."""
     if not path.is_dir():
         return
     contents = list(path.iterdir())
@@ -469,7 +470,6 @@ IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".svg"}
 YAML_EXTS  = {".yml", ".yaml"}
 
 def migrate_loose_rule(yf: Path, base: Path, meta: dict) -> Optional[dict]:
-    """Move regra solta em Sigma/<tactic>/ para Sigma/<tactic>/<folder>/ e retorna meta atualizado."""
     tactic = meta["tactic"]
     folder_name = meta["folder"]
     rule_dir = base / "Sigma" / tactic / folder_name
@@ -491,21 +491,15 @@ def migrate_loose_rule(yf: Path, base: Path, meta: dict) -> Optional[dict]:
         return None
 
 def normalize_existing_rule(yf: Path, base: Path, meta: dict) -> Optional[dict]:
-    """
-    Se a regra está em uma subpasta cujo nome difere do folder_name ideal,
-    move para a pasta correta e remove a antiga se vazia.
-    """
     current_parent = yf.parent
     expected_parent = base / "Sigma" / meta["tactic"] / meta["folder"]
 
     if current_parent == expected_parent:
-        # Já está no lugar correto, apenas garante poc/.gitkeep
         poc_dir = current_parent / "poc"
         poc_dir.mkdir(exist_ok=True)
         (poc_dir / ".gitkeep").touch(exist_ok=True)
         return meta
 
-    # Precisa realocar
     try:
         expected_parent.mkdir(parents=True, exist_ok=True)
         poc_dir = expected_parent / "poc"
@@ -516,14 +510,13 @@ def normalize_existing_rule(yf: Path, base: Path, meta: dict) -> Optional[dict]:
         shutil.move(str(yf), str(dest_yml))
         logger.info("Normalizado: %s → Sigma/%s/%s/", yf.name, meta["tactic"], meta["folder"])
 
-        # Remove diretório antigo se vazio
         remove_empty_dir(current_parent)
 
         meta["link"] = f"Sigma/{meta['tactic']}/{meta['folder']}/{dest_yml.name}"
         return meta
     except Exception as e:
         logger.error("Falha ao normalizar %s: %s", yf.name, e)
-        return meta  # retorna original para não perder do inventário
+        return meta
 
 def organize_duplicate(src: Path, base: Path) -> None:
     dup_dir = base / "duplicates"
@@ -556,11 +549,9 @@ def collect_existing_rules(
         if not tactic_dir.is_dir():
             continue
 
-        # .gitkeep na raiz da tática (opcional)
         if cfg.get("add_tactic_gitkeep", True):
             (tactic_dir / ".gitkeep").touch(exist_ok=True)
 
-        # Primeiro: regras já organizadas (dentro de subpastas)
         for rule_folder in tactic_dir.iterdir():
             if not rule_folder.is_dir():
                 continue
@@ -570,7 +561,6 @@ def collect_existing_rules(
                     if meta:
                         to_normalize.append((yf, meta))
 
-        # Depois: regras soltas diretamente em tactic_dir
         for yf in tactic_dir.iterdir():
             if yf.is_file() and yf.suffix.lower() in YAML_EXTS:
                 meta, reason = parse_sigma(yf, cfg, stats, seen_hashes, hash_lock, hash_cache)
@@ -579,13 +569,11 @@ def collect_existing_rules(
                 elif reason == "duplicate":
                     organize_duplicate(yf, base)
 
-    # Migração (sequencial)
     for yf, meta in to_migrate:
         new_meta = migrate_loose_rule(yf, base, meta)
         if new_meta:
             inventory.append(new_meta)
 
-    # Normalização (sequencial)
     for yf, meta in to_normalize:
         new_meta = normalize_existing_rule(yf, base, meta)
         if new_meta:
@@ -721,13 +709,34 @@ def compute_metrics(inventory: list[dict], stats: Stats, cfg: dict) -> dict:
     }
 
 # =============================================================================
-# README
+# README e Inventory
 # =============================================================================
 
 SEV_RANK  = {"critical": 4, "high": 3, "medium": 2, "low": 1}
 SEV_EMOJI = {"critical": "🔴", "high": "🟠", "medium": "🟡", "low": "🔵"}
 
-def render_readme(metrics: dict, inventory: list[dict]) -> str:
+def render_inventory(inventory: list[dict]) -> str:
+    sorted_inv = sorted(
+        inventory,
+        key=lambda x: (SEV_RANK.get(x["level"], 0), x["score_percent"]),
+        reverse=True,
+    )
+    table  = "| Nível | Tática | Regra | Qualidade | Link |\n"
+    table += "|:---:|:---|:---|:---:|:---:|\n"
+    for item in sorted_inv:
+        em    = SEV_EMOJI.get(item["level"], "⚪")
+        title = item["tactic"].replace("_", " ").title()
+        table += f"| {em} | {title} | `{item['file']}` | {item['score_percent']}% | [📄 Ver]({item['link']}) |\n"
+    return f"""# 📋 Inventário Completo de Regras Sigma
+
+**Total de regras:** {len(inventory)}
+
+{table}
+---
+*Gerado via {SCRIPT_NAME} v{SCRIPT_VERSION} em {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*
+"""
+
+def render_readme(metrics: dict, inventory: list[dict], max_display: int = 30) -> str:
     cov     = metrics["global_coverage"]
     density = metrics["active_density"]
     impact  = metrics["high_impact_ratio"]
@@ -745,13 +754,19 @@ def render_readme(metrics: dict, inventory: list[dict]) -> str:
         key=lambda x: (SEV_RANK.get(x["level"], 0), x["score_percent"]),
         reverse=True,
     )
+    display_inv = sorted_inv[:max_display]
 
     table  = "| Nível | Tática | Regra | Qualidade | Link |\n"
     table += "|:---:|:---|:---|:---:|:---:|\n"
-    for item in sorted_inv:
+    for item in display_inv:
         em    = SEV_EMOJI.get(item["level"], "⚪")
         title = item["tactic"].replace("_", " ").title()
         table += f"| {em} | {title} | `{item['file']}` | {item['score_percent']}% | [📄 Ver]({item['link']}) |\n"
+
+    remaining = total - len(display_inv)
+    note = ""
+    if remaining > 0:
+        note = f"\n> ⚡ Exibindo as {max_display} regras mais relevantes. [Ver inventário completo ({remaining} restantes)](inventory.md)\n"
 
     qual_table = "| Tática | Qualidade Média |\n|:---|:---:|\n"
     for t in sorted(qual_tac.keys()):
@@ -783,7 +798,8 @@ def render_readme(metrics: dict, inventory: list[dict]) -> str:
 
 {gaps}
 
-## 📋 Detection Inventory (ordenado por risco)
+## 📋 Top {max_display} Regras Mais Relevantes
+{note}
 {table}
 ---
 *Gerado via {SCRIPT_NAME} v{SCRIPT_VERSION} em {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*
@@ -860,7 +876,7 @@ def process_repo(
     ignored_dirs  = {"Sigma", ".git", "audit", "img", "research", "tools", "duplicates"}
     ignored_files = {
         "README.md", "metrics.json", "metrics.prom", "hash_cache.json",
-        "config.yaml", SCRIPT_NAME, ".gitignore",
+        "config.yaml", SCRIPT_NAME, ".gitignore", "inventory.md",
     }
 
     inventory = collect_existing_rules(base, cfg, stats, seen_hashes, hash_lock, hash_cache)
@@ -978,13 +994,15 @@ def main() -> None:
             logger.warning("CI AVISO: %d regras falharam no sigma-cli", metrics["sigma_cli_failures"])
         raise SystemExit(exit_code)
     else:
-        _safe_write(output_dir / "README.md", render_readme(metrics, combined_inventory))
+        max_display = cfg.get("max_rules_in_readme", 30)
+        _safe_write(output_dir / "README.md", render_readme(metrics, combined_inventory, max_display))
+        _safe_write(output_dir / "inventory.md", render_inventory(combined_inventory))
 
     logger.info("Finalizado | Regras: %d | Cobertura: %s%% | Qualidade: %s%% | High Impact: %s%%",
                 metrics["total_rules"], metrics["global_coverage"],
                 metrics["average_quality"], metrics["high_impact_ratio"])
     if not args.ci:
-        logger.info("Gerados: README.md | metrics.json | metrics.prom | hash_cache.json")
+        logger.info("Gerados: README.md | inventory.md | metrics.json | metrics.prom | hash_cache.json")
 
 if __name__ == "__main__":
     main()
